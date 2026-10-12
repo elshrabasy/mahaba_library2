@@ -1,6 +1,13 @@
 // Mahabat Engine -> original Mahaba NestEngine contract.
 // This bridge intentionally uses the exact outline/cut/crease geometry.
 // No bounding-box replacement and no heuristic geometry simplification.
+import './nest-engine-core.js';
+
+// Keep the pilot compatible with the historical global name while the exact
+// bundled source file remains preserved separately from this runtime bridge.
+if(typeof globalThis!=='undefined'&&globalThis.MahabaNestEngine&&!globalThis.NestEngine){
+  globalThis.NestEngine=globalThis.MahabaNestEngine;
+}
 
 const clonePoint=p=>[Number(p[0]),Number(p[1])];
 const cloneLine=l=>l.map(clonePoint);
