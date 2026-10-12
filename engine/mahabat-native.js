@@ -1,5 +1,5 @@
 // Mahabat Engine panel graph -> existing Mahaba Library native 3D schema.
-// Reuses native_runtime.js / SharedStudio instead of introducing a second 3D viewer.
+// The Studio/Viewer remain the original Mahaba Library stack; only geometry comes from Mahabat Engine.
 
 const EPS=1e-9;
 const signedArea=p=>p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1];},0)/2;
@@ -15,15 +15,13 @@ function cleanPolygon(poly){
  if(out.length<3)throw new Error('لوحة ثلاثية الأبعاد بلا محيط صالح.');
  return out;
 }
-
 function pointInTriangle(p,a,b,c){
  const cross=(u,v,w)=>(v[0]-u[0])*(w[1]-u[1])-(v[1]-u[1])*(w[0]-u[0]);
  const d1=cross(a,b,p),d2=cross(b,c,p),d3=cross(c,a,p),neg=d1<-EPS||d2<-EPS||d3<-EPS,pos=d1>EPS||d2>EPS||d3>EPS;
  return !(neg&&pos);
 }
-
 export function triangulatePolygon(source){
- let poly=cleanPolygon(source),order=poly.map((_,i)=>i);
+ const poly=cleanPolygon(source),order=poly.map((_,i)=>i);
  if(signedArea(poly)<0)order.reverse();
  const triangles=[],cross=(a,b,c)=>(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);
  let guard=0;
@@ -41,81 +39,86 @@ export function triangulatePolygon(source){
  return {polygon:poly,triangles};
 }
 
-function panelGeometry(panel,thickness){
- const {polygon,triangles}=triangulatePolygon(panel.poly),n=polygon.length,z=thickness/2;
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function sameSegment(a,b,c,d,tol=.35){return (dist(a,c)<=tol&&dist(b,d)<=tol)||(dist(a,d)<=tol&&dist(b,c)<=tol);}
+function isCreaseEdge(a,b,hinges){return hinges.some(([c,d])=>sameSegment(a,b,c,d));}
+function boardProfile(material={}){
+ const key=String(material.key||material.name||'').toLowerCase(),d=Number(material.thickness)||1.5;
+ if(key.includes('bc')||key.includes('double'))return {kind:'double',liner:.20,medium:.12,waves:[{pitch:6.2,center:d*.24,amp:Math.max(.45,d*.20)},{pitch:8.0,center:-d*.24,amp:Math.max(.55,d*.20)}]};
+ const pitch=key.includes('b-flute')||/^b\b/.test(key)?6.2:key.includes('c-flute')||/^c\b/.test(key)?8.0:3.2;
+ return {kind:'single',liner:Math.min(.20,d*.18),medium:.11,waves:[{pitch,center:0,amp:Math.max(.28,(d*.5)-Math.min(.20,d*.18)-.08)}]};
+}
+function fluteCrossFactor(dx,dy,fd){
+ const len=Math.hypot(dx,dy)||1;
+ // Flutes run along FD; the visible wave frequency is across that direction.
+ return fd==='FD_X'?Math.abs(dy)/len:Math.abs(dx)/len;
+}
+function addSideRibbon(push,index,a,b,z0,z1,nrm){
+ const v0=push([a[0],a[1],z0],nrm),v1=push([b[0],b[1],z0],nrm),v2=push([b[0],b[1],z1],nrm),v3=push([a[0],a[1],z1],nrm);
+ index.push(v0,v1,v2,v0,v2,v3);
+}
+function addFluteWave(push,index,a,b,nrm,wave,medium,fd){
+ const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,cross=Math.max(.12,fluteCrossFactor(dx,dy,fd));
+ const alongPitch=wave.pitch/cross,steps=Math.max(4,Math.ceil(len/Math.max(.7,alongPitch/8)));
+ let prev=null;
+ for(let i=0;i<=steps;i++){
+  const t=i/steps,x=a[0]+dx*t,y=a[1]+dy*t,s=len*t;
+  const z=wave.center+wave.amp*Math.sin((s/alongPitch)*Math.PI*2),half=medium/2;
+  const lo=push([x,y,z-half],nrm),hi=push([x,y,z+half],nrm);
+  if(prev)index.push(prev[0],lo,hi,prev[0],hi,prev[1]);
+  prev=[lo,hi];
+ }
+}
+
+// Corrugated construction: two liner faces + liner cut edges + real visible flute medium.
+// Crease/hinge edges deliberately have NO cut-wall geometry, so folds read as scored board rather than broken/cut cardboard.
+function panelGeometry(panel,material,hinges,fd){
+ const thickness=Number(material.thickness)||1.5,{polygon,triangles}=triangulatePolygon(panel.poly),n=polygon.length,z=thickness/2,profile=boardProfile(material);
  const positions=[],normals=[],index=[],groups=[];
  const push=(p,nrm)=>{positions.push(...p);normals.push(...nrm);return positions.length/3-1;};
- const front=polygon.map(p=>push([p[0],p[1],z],[0,0,1]));
- const back=polygon.map(p=>push([p[0],p[1],-z],[0,0,-1]));
- const fStart=index.length;
- for(const t of triangles)index.push(front[t[0]],front[t[1]],front[t[2]]);
- groups.push({symbol:'OUT',start:fStart,count:index.length-fStart});
- const bStart=index.length;
- for(const t of triangles)index.push(back[t[2]],back[t[1]],back[t[0]]);
- groups.push({symbol:'IN',start:bStart,count:index.length-bStart});
- const eStart=index.length;
+ const front=polygon.map(p=>push([p[0],p[1],z],[0,0,1])),back=polygon.map(p=>push([p[0],p[1],-z],[0,0,-1]));
+ let start=index.length;for(const t of triangles)index.push(front[t[0]],front[t[1]],front[t[2]]);groups.push({symbol:'OUT',start,count:index.length-start});
+ start=index.length;for(const t of triangles)index.push(back[t[2]],back[t[1]],back[t[0]]);groups.push({symbol:'IN',start,count:index.length-start});
+ start=index.length;
  for(let i=0;i<n;i++){
-  const a=polygon[i],b=polygon[(i+1)%n],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,nrm=[dy/len,-dx/len,0];
-  const v0=push([a[0],a[1],z],nrm),v1=push([b[0],b[1],z],nrm),v2=push([b[0],b[1],-z],nrm),v3=push([a[0],a[1],-z],nrm);
-  index.push(v0,v1,v2,v0,v2,v3);
+  const a=polygon[i],b=polygon[(i+1)%n];if(isCreaseEdge(a,b,hinges))continue;
+  const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,nrm=[dy/len,-dx/len,0],lt=profile.liner;
+  // only the paper liners are visible at the cut edge; there is no fake solid brown slab.
+  addSideRibbon(push,index,a,b,z-lt,z,nrm);addSideRibbon(push,index,a,b,-z,-z+lt,nrm);
+  if(profile.kind==='double')addSideRibbon(push,index,a,b,-lt/2,lt/2,nrm); // middle liner of BC board
  }
- groups.push({symbol:'EDGE',start:eStart,count:index.length-eStart});
+ groups.push({symbol:'EDGE',start,count:index.length-start});
+ start=index.length;
+ for(let i=0;i<n;i++){
+  const a=polygon[i],b=polygon[(i+1)%n];if(isCreaseEdge(a,b,hinges))continue;
+  const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,nrm=[dy/len,-dx/len,0];
+  for(const wave of profile.waves)addFluteWave(push,index,a,b,nrm,wave,profile.medium,fd);
+ }
+ groups.push({symbol:'FLUTE',start,count:index.length-start});
  return {attributes:{POSITION:{array:positions},NORMAL:{array:normals}},index,groups};
 }
 
-function interval(stages,name,duration){
- const v=stages?.[name];
- if(Array.isArray(v)&&v.length===2)return v;
- return [0,duration||1];
-}
-
+function interval(stages,name,duration){const v=stages?.[name];return Array.isArray(v)&&v.length===2?v:[0,duration||1];}
 function foldNode(panel,geometryId,stages,duration){
- const node={id:panel.id,geometry:geometryId,children:[],bindings:{OUT:'outside',IN:'inside',EDGE:'edge'},transforms:[],tracks:{}};
+ const node={id:panel.id,geometry:geometryId,children:[],bindings:{OUT:'outside',IN:'inside',EDGE:'edge',FLUTE:'flute'},transforms:[],tracks:{}};
  if(!panel.hinge)return node;
  const [a,b]=panel.hinge,dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,axis=[dx/len,dy/len,0],range=interval(stages,panel.stage,duration),angle=Number(panel.angle??90);
- node.transforms=[
-  {kind:'translate',sid:'hinge-in',value:[a[0],a[1],0]},
-  {kind:'rotate',sid:'fold',value:[...axis,0]},
-  {kind:'translate',sid:'hinge-out',value:[-a[0],-a[1],0]}
- ];
- node.tracks.fold={times:[range[0],range[1]],values:[...axis,0,...axis,angle],width:4,interpolation:['LINEAR']};
- return node;
+ node.transforms=[{kind:'translate',sid:'hinge-in',value:[a[0],a[1],0]},{kind:'rotate',sid:'fold',value:[...axis,0]},{kind:'translate',sid:'hinge-out',value:[-a[0],-a[1],0]}];
+ node.tracks.fold={times:[range[0],range[1]],values:[...axis,0,...axis,angle],width:4,interpolation:['LINEAR']};return node;
 }
-
-function materialValues(width,height,side,color){
+function materialValues(width,height,side,color,roughness=.72){
  const outside=side==='outside',sx=(outside?1:-1)/width,tx=outside?0:1;
- return {
-  albedoColor_Uni:[...color,1],orm_Uni:[1,.72,0,1],
-  vertexToDesignMatrix_Uni:[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
-  sheetTexMatrix_Uni:[sx,0,0,tx,0,1/height,0,0],
-  opDeformType_Uni:[0]
- };
+ return {albedoColor_Uni:[...color,1],orm_Uni:[1,roughness,0,1],vertexToDesignMatrix_Uni:[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],sheetTexMatrix_Uni:[sx,0,0,tx,0,1/height,0,0],opDeformType_Uni:[0]};
 }
-
 export function buildMahabatNative(result){
- const panels=result.panels||result.panelGraph;
- if(!Array.isArray(panels)||!panels.length)throw new Error('Mahabat Engine لم يُرجع panel graph للعرض ثلاثي الأبعاد.');
- const width=Number(result.width),height=Number(result.height),thickness=Number(result.material?.thickness||result.mat?.thickness||.5);
- if(!(width>0&&height>0&&thickness>0))throw new Error('أبعاد أو سماكة النموذج غير صالحة.');
- const geometries={},nodes=new Map(),duration=Number(result.animations?.endTime||5);
- for(const p of panels){const id=`mahaba-panel-${p.id}`,gid=`mahaba-geo-${p.id}`;geometries[gid]=panelGeometry(p,thickness);nodes.set(p.id,foldNode(p,gid,result.stages,duration));}
- const root={id:'__scene',children:[],transforms:[]};
- for(const p of panels){const n=nodes.get(p.id);if(p.parent&&nodes.has(p.parent))nodes.get(p.parent).children.push(n);else root.children.push(n);}
- const kraft=[.69,.51,.31];
- return {
-  schema:1,source:'mahabat-engine',code:result.code,templateId:`mahabat:${result.code}`,resourceVariant:'mahabat',
-  sourceSHA256:`mahabat:${result.code}:${result.version||'pilot'}`,unitMeter:.001,upAxis:'Z_UP',duration,
-  node:root,geometries,
-  materials:{
-   outside:{values:materialValues(width,height,'outside',kraft),maps:{}},
-   inside:{values:materialValues(width,height,'inside',[.76,.62,.44]),maps:{}},
-   edge:{values:{albedoColor_Uni:[.42,.29,.16,1],orm_Uni:[1,.92,0,1],opDeformType_Uni:[0]},maps:{}}
-  },
-  materialInfo:result.material||result.mat||{},
-  drawings:[{name:result.name||result.code,objRectWidth:width,objRectHeight:height,available:true,mahabaPartIndex:0,source:'mahabat-engine'}],
-  mahabaGeometry:[{name:result.name||result.code,width,height,lines:result.lines,outline:result.outline,panels}],
-  parameters:result.parameters,
-  requestedParameters:result.input||{},validation:result.validation,
-  animations:result.animations||{endTime:duration,phases:[]},stages:result.stages||{},metadata:{dimensionType:result.dimensionType,fluteDirection:result.fluteDirection}
- };
+ const panels=result.panels||result.panelGraph;if(!Array.isArray(panels)||!panels.length)throw new Error('Mahabat Engine لم يُرجع panel graph للعرض ثلاثي الأبعاد.');
+ const width=Number(result.width),height=Number(result.height),material=result.material||result.mat||{},thickness=Number(material.thickness||.5);if(!(width>0&&height>0&&thickness>0))throw new Error('أبعاد أو سماكة النموذج غير صالحة.');
+ const geometries={},nodes=new Map(),duration=Number(result.animations?.endTime||5),hinges=panels.filter(p=>p.hinge).map(p=>p.hinge),fd=result.fluteDirection?.key||result.fluteDirection||result.input?.FD===1?'FD_X':'FD_Y';
+ for(const p of panels){const gid=`mahaba-geo-${p.id}`;geometries[gid]=panelGeometry(p,material,hinges,fd);nodes.set(p.id,foldNode(p,gid,result.stages,duration));}
+ const root={id:'__scene',children:[],transforms:[]};for(const p of panels){const n=nodes.get(p.id);if(p.parent&&nodes.has(p.parent))nodes.get(p.parent).children.push(n);else root.children.push(n);}
+ // Palette follows the legacy corrugated look: kraft liners with a lighter raw flute medium at exposed cut edges.
+ const outside=[.69,.51,.31],inside=[.76,.62,.44],edge=[.56,.39,.22],flute=[.72,.53,.31];
+ return {schema:1,source:'mahabat-engine',code:result.code,templateId:`mahabat:${result.code}`,resourceVariant:'mahabat',sourceSHA256:`mahabat:${result.code}:${result.version||'pilot'}`,unitMeter:.001,upAxis:'Z_UP',duration,node:root,geometries,
+  materials:{outside:{values:materialValues(width,height,'outside',outside,.74),maps:{}},inside:{values:materialValues(width,height,'inside',inside,.82),maps:{}},edge:{values:{albedoColor_Uni:[...edge,1],orm_Uni:[1,.9,0,1],opDeformType_Uni:[0]},maps:{}},flute:{values:{albedoColor_Uni:[...flute,1],orm_Uni:[1,.88,0,1],opDeformType_Uni:[0]},maps:{}}},
+  materialInfo:{...material,construction:boardProfile(material)},drawings:[{name:result.name||result.code,objRectWidth:width,objRectHeight:height,available:true,mahabaPartIndex:0,source:'mahabat-engine'}],mahabaGeometry:[{name:result.name||result.code,width,height,lines:result.lines,outline:result.outline,panels}],parameters:result.parameters,requestedParameters:result.input||{},validation:result.validation,animations:result.animations||{endTime:duration,phases:[]},stages:result.stages||{},metadata:{dimensionType:result.dimensionType,fluteDirection:fd,boardConstruction:'liner-flute-liner',hingeEdgesAreScores:true}};
 }
