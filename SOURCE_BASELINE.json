@@ -1,0 +1,9 @@
+{
+  "source_repository": "elshrabasy/library_mahaba",
+  "source_ref": "main",
+  "source_commit": "904652622bb6898278b1232eaed332be2195f76c",
+  "source_tree": "aa13d41fd84a43b043ad18cf834773678aad996e",
+  "target_repository": "elshrabasy/mahaba_library2",
+  "integration_branch": "engine-integration-v1",
+  "policy": "source repository is read-only; all experiments live in mahaba_library2"
+}
