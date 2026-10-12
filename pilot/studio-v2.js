@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261013-2';
 
-globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html'};
+globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261013-2'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
 const host=document.getElementById('canvas3d'),slider=document.getElementById('fold'),status=document.getElementById('modelStatus');
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor('#09151f',1);host.append(renderer.domElement);
