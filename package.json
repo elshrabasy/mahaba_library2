@@ -1,0 +1,8 @@
+{
+  "name": "mahaba-library2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/evc11001-pilot.mjs"
+  }
+}
