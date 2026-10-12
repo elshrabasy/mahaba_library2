@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mahabat Packaging Studio · Native Pilot</title>
+<link rel="stylesheet" href="./pilot.css">
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<header>
+  <div><strong>MAHABAT</strong><span>Packaging Studio · Native Engine Pilot</span></div>
+  <div class="badge">EVC11001 · بدون EngView</div>
+</header>
+<main>
+  <aside class="panel controls">
+    <h2>المقاسات والخامة</h2>
+    <div class="grid3">
+      <label>الطول L<input id="L" type="number" value="125" min="40"></label>
+      <label>العرض W<input id="W" type="number" value="105" min="30"></label>
+      <label>الارتفاع H<input id="H" type="number" value="88" min="30"></label>
+    </div>
+    <label>نوع القياس<select id="DT"><option value="1">داخلي ID</option><option value="2">خارجي OD</option><option value="3">Score to Score</option></select></label>
+    <label>الخامة<select id="MAT"><option value="1">E Flute · 1.5 mm</option><option value="2">B Flute · 3 mm</option><option value="3">C Flute · 4 mm</option><option value="4">BC Double Wall · 6.5 mm</option></select></label>
+    <label>اتجاه الفلوت<select id="FD"><option value="2">FD_Y</option><option value="1">FD_X</option></select></label>
+    <button id="apply" class="primary">تطبيق وإعادة بناء القالب</button>
+    <div id="status" class="status">جاهز</div>
+    <hr>
+    <h2>التصميم</h2>
+    <label class="upload">ارفع Artwork للصطح الخارجي<input id="artwork" type="file" accept="image/png,image/jpeg,image/webp"></label>
+    <button id="clearArtwork">إزالة التصميم</button>
+    <hr>
+    <h2>الطي</h2>
+    <input id="fold" type="range" min="0" max="1000" value="1000">
+    <div class="row"><button id="play">▶ تشغيل</button><button id="flat">2D Flat</button><button id="closed">Closed</button></div>
+    <div class="facts" id="facts"></div>
+  </aside>
+  <section class="workspace">
+    <div class="toolbar"><button data-view="3d" class="active">3D</button><button data-view="2d">Dieline 2D</button><span id="engineState">Mahabat Native</span></div>
+    <div id="view3d" class="view active"></div>
+    <div id="view2d" class="view"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  </section>
+</main>
+<script type="module" src="./pilot.js"></script>
+</body>
+</html>
