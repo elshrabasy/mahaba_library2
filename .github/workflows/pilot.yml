@@ -19,4 +19,6 @@ jobs:
           node --check pilot/pilot.js
           node --check studio-src/native_runtime.js
           node --check studio-src/native_gpu.js
+          node --check studio-src/nest-engine-core.js
+          node --check studio-src/nesting-bridge.js
           node --check engine/mahabat-native.js
