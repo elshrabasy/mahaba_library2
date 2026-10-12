@@ -5,8 +5,7 @@ import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '.
 import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js';
 
 globalThis.MAHABAT_STUDIO_ASSETS={
- './assets/studio/gallery-theme.css':'../assets/studio/gallery-theme.css',
- './assets/studio/nesting.html':'../assets/studio/nesting.html'
+ './assets/studio/nesting.html':'../studio-src/nesting.html'
 };
 
 const first=(object,prefix)=>Object.entries(object||{}).find(([k,v])=>k.startsWith(prefix)&&v?.length)?.[1];
