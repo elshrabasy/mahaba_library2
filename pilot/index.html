@@ -17,7 +17,7 @@
 
 <section id="libraryScreen" class="library-screen">
   <div class="library-hero">
-    <div><span class="eyebrow">مكتبة الاختبار المستقلة</span><h1>القوالب المحوّلة إلى محرك مهابة</h1><p>نختبر هنا الهندسة، الخامات، التصميم والـ3D قبل نقل أي تطوير إلى المنتج الرئيسي.</p></div>
+    <div><span class="eyebrow">مكتبة الاختبار المستقلة</span><h1>القوالب المحوّلة إلى محرك مهابة</h1><p>نختبر هنا الهندسة، الخامات، التصميم والـ3D والمونتاج قبل نقل أي تطوير إلى المنتج الرئيسي.</p></div>
     <div class="stats"><div><b>998</b><span>Converted</span></div><div><b>1</b><span>Connected Pilot</span></div><div><b>0</b><span>EngView Runtime</span></div></div>
   </div>
   <div class="library-toolbar"><input id="librarySearch" type="search" placeholder="ابحث بالكود أو الاسم…"><button class="filter active">كل المتصل</button><button class="filter">Corrugated</button></div>
@@ -58,17 +58,30 @@
       <div class="row"><button id="play">▶ تشغيل</button><button id="flat">2D Flat</button><button id="closed">Closed</button></div>
     </div></div>
 
+    <div class="accordion open"><button class="accordion-title" type="button">المونتاج <span>⌄</span></button><div class="accordion-body">
+      <div class="grid2"><label>عرض الشيت mm<input id="nestW" type="number" value="1000"></label><label>ارتفاع الشيت mm<input id="nestH" type="number" value="690"></label></div>
+      <div class="grid2"><label>البنسة mm<input id="nestGrip" type="number" value="10"></label><label>الفاصل mm<input id="nestGap" type="number" value="3" step="0.1"></label></div>
+      <label>الدوران<select id="nestRotation"><option value="half">0° / 180°</option><option value="all">0° / 90° / 180° / 270°</option><option value="none">0° فقط</option></select></label>
+      <button id="nestingGate" class="primary">فتح المونتاج داخل الاستوديو</button>
+      <small class="note">المونتاج يأخذ نفس Outline الخارج من Mahabat Engine. لا يتم استخدام Bounding Box بدل القالب.</small>
+    </div></div>
+
     <div class="accordion"><button class="accordion-title" type="button">الإنتاج <span>⌄</span></button><div class="accordion-body">
       <button id="exportSvg">تنزيل SVG 1:1</button>
-      <button id="nestingGate" class="muted-action">المونتاج الحقيقي — جاري الربط</button>
-      <small class="note">لن نستخدم مونتاج تقريبي. سيتم توصيل نفس Polygon بمحرك NestEngine الأصلي.</small>
     </div></div>
     <div class="facts" id="facts"></div>
   </aside>
   <section class="workspace">
-    <div class="toolbar"><button data-view="3d" class="active">3D</button><button data-view="2d">Dieline 2D</button><span id="engineState">Mahabat Native · One Geometry Source</span></div>
+    <div class="toolbar"><button data-view="3d" class="active">3D</button><button data-view="2d">Dieline 2D</button><button data-view="nest">Nesting</button><span id="engineState">Mahabat Native · One Geometry Source</span></div>
     <div id="view3d" class="view active"></div>
     <div id="view2d" class="view"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div id="viewnest" class="view nesting-view">
+      <div class="nesting-head"><div><b>مونتاج الشيت</b><span id="nestEngineBadge">Exact geometry bridge ready</span></div><button id="runNest">تشغيل NestEngine</button></div>
+      <div class="nesting-layout">
+        <div class="sheet-wrap"><svg id="nestSvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <aside class="nest-results"><h3>بيانات الإدخال</h3><div id="nestFacts"></div><h3>النتيجة</h3><div id="nestResult">لم يتم التشغيل بعد.</div></aside>
+      </div>
+    </div>
   </section>
 </main>
 <script type="module" src="./pilot.js"></script>
