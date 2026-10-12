@@ -1,4 +1,4 @@
-import {generateEVC11001} from './templates/EVC11001.js';
+import {generateEVC11001} from './templates/EVC11001-native.js';
 import {buildMahabatNative} from './mahabat-native.js';
 
 const REGISTRY=new Map([
