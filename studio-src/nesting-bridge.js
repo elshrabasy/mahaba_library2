@@ -1,16 +1,14 @@
-// Mahabat Engine -> original Mahaba NestEngine contract.
-// This bridge intentionally uses the exact outline/cut/crease geometry.
-// No bounding-box replacement and no heuristic geometry simplification.
+// Mahabat Engine -> Mahaba NestEngine contract.
+// The bridge uses the exact Mahabat outline/cut/crease geometry.
+// No bounding-box replacement is permitted.
 import './nest-engine-core.js';
+import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-lite.js';
 
-// Keep the pilot compatible with the historical global name while the exact
-// bundled source file remains preserved separately from this runtime bridge.
 if(typeof globalThis!=='undefined'&&globalThis.MahabaNestEngine&&!globalThis.NestEngine){
   globalThis.NestEngine=globalThis.MahabaNestEngine;
 }
 
 const clonePoint=p=>[Number(p[0]),Number(p[1])];
-const cloneLine=l=>l.map(clonePoint);
 
 export function buildNestTemplate(engineResult){
   if(!engineResult)throw new Error('لا توجد هندسة من Mahabat Engine.');
@@ -30,14 +28,14 @@ export function buildNestTemplate(engineResult){
   };
 }
 
-export function buildNestConfig({sheetWidth=1000,sheetHeight=690,gripper=10,marginTop=5,marginRight=5,marginBottom=5,marginLeft=5,gap=3,bleed=0,rotation='half'}={}){
+export function buildNestConfig({sheetWidth=1000,sheetHeight=690,gripper=10,marginTop=5,marginRight=5,marginBottom=5,marginLeft=5,gap=3,bleed=0,rotation='half',deep=false}={}){
   const W=Number(sheetWidth)-Number(marginLeft)-Number(marginRight);
   const top=Math.max(Number(gripper),Number(marginTop));
   const H=Number(sheetHeight)-top-Number(marginBottom);
   if(!(W>0&&H>0))throw new Error('مساحة الفرخ الفعلية غير صالحة.');
   const clearance=Math.max(0,Number(gap))+2*Math.max(0,Number(bleed));
   const angles=rotation==='all'?[0,90,180,270]:rotation==='none'?[0]:[0,180];
-  return {W,H,clearance,angles,offsetX:Number(marginLeft),offsetY:top,sheetWidth:Number(sheetWidth),sheetHeight:Number(sheetHeight),gripper:Number(gripper),bleed:Number(bleed)};
+  return {W,H,clearance,angles,offsetX:Number(marginLeft),offsetY:top,sheetWidth:Number(sheetWidth),sheetHeight:Number(sheetHeight),gripper:Number(gripper),bleed:Number(bleed),deep:Boolean(deep)};
 }
 
 export function regularPreview(NestEngine,engineResult,settings={}){
@@ -46,9 +44,22 @@ export function regularPreview(NestEngine,engineResult,settings={}){
   return {template:T,config,result:NestEngine.regularSolution(T,config)};
 }
 
+export function prepareNFP(engineResult,settings={},onProgress=()=>{}){
+  const template=prepareIrregularTemplate(buildNestTemplate(engineResult));
+  const config=buildNestConfig(settings);
+  const rotations=relativeRotations(config.angles);
+  const nfp=buildConvexNFP(template.cells,rotations,onProgress);
+  return {template,config,nfp};
+}
+
 export function solveNesting(NestEngine,engineResult,nfp,settings={},onProgress=()=>{}){
   if(!NestEngine?.solve)throw new Error('NestEngine الأصلي غير محمّل.');
-  const T=buildNestTemplate(engineResult),config=buildNestConfig(settings);
-  if(!nfp)throw new Error('بيانات NFP مطلوبة للمونتاج غير المنتظم.');
-  return {template:T,config,result:NestEngine.solve(T,nfp,config,onProgress)};
+  let template,config;
+  if(nfp){template=prepareIrregularTemplate(buildNestTemplate(engineResult));config=buildNestConfig(settings);}
+  else{
+    const prepared=prepareNFP(engineResult,settings,onProgress);
+    template=prepared.template;config=prepared.config;nfp=prepared.nfp;
+  }
+  const result=NestEngine.solve(template,nfp,config,onProgress);
+  return {template,config,nfp,result};
 }
