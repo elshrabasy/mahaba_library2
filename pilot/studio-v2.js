@@ -4,7 +4,6 @@ import {generateMahabatNative} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
 import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js';
 
-// Preserve the first Mahaba Library Studio paths. The only replacement is the geometry provider.
 globalThis.MAHABAT_STUDIO_ASSETS={
  './assets/studio/gallery-theme.css':'../assets/studio/gallery-theme.css',
  './assets/studio/nesting.html':'../assets/studio/nesting.html'
@@ -46,7 +45,7 @@ async function buildOriginalMaterials(nativeData){
   if(normalMap)settings.normalScale=new THREE.Vector2(values.BumpIntensity1_Uni?.[0]??1,values.BumpIntensity1_Uni?.[0]??1);
   return [id,new THREE.MeshPhysicalMaterial({...settings,clearcoat:.1,clearcoatRoughness:.3})];
  }));
- textures=loaded;materials=entries.map(([,m])=>m);return Object.fromEntries(entries);
+ return {entries:Object.fromEntries(entries),materials:entries.map(([,m])=>m),textures:loaded};
 }
 
 function fit(){if(!model)return;const b=visibleBounds(model);if(b.isEmpty())return;const center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3()),r=Math.max(size.x,size.y,size.z,.08);controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(1.15,.82,1.25).normalize().multiplyScalar(r*2.45));camera.near=Math.max(.0001,r/1000);camera.far=Math.max(20,r*50);camera.updateProjectionMatrix();controls.update();floor.position.y=b.min.y-.002;}
@@ -54,7 +53,7 @@ function fit(){if(!model)return;const b=visibleBounds(model);if(b.isEmpty())retu
 const viewer={
  host,renderer,scene,camera,controls,floor,slider,status,catalog:[{code:'EVC11001'}],currentCode:'EVC11001',model:null,
  async load(code,_variant='',parameters=null){try{
-   currentParams=parameters?{...currentParams,...parameters}:{L:125,W:105,H:88,DT:1,MAT:1,FD:2};const nextData=generateMahabatNative(code,currentParams);const nextMaterials=await buildOriginalMaterials(nextData);disposeRenderAssets();data=nextData;materialEntries=nextMaterials;materials=Object.values(nextMaterials);model=buildNativeModel(data,materialEntries,{gpu:false});viewer.model=model;viewer.currentCode=code;scene.add(model.root);slider.value='1000';setNativeTime(model,data.duration);fit();await studio.bind(data,model);status.textContent=`${code} · ${data.materialInfo.name} · Mahabat Engine`;return true;
+   currentParams=parameters?{...currentParams,...parameters}:{L:125,W:105,H:88,DT:1,MAT:1,FD:2};const nextData=generateMahabatNative(code,currentParams);disposeRenderAssets();data=nextData;const built=await buildOriginalMaterials(data);materialEntries=built.entries;materials=built.materials;textures=built.textures;model=buildNativeModel(data,materialEntries,{gpu:false});viewer.model=model;viewer.currentCode=code;scene.add(model.root);slider.value='1000';setNativeTime(model,data.duration);fit();await studio.bind(data,model);status.textContent=`${code} · ${data.materialInfo.name} · Mahabat Engine`;return true;
   }catch(e){status.textContent=e.userMessage||e.message;console.error(e);return false;}},
  seek(v){if(!model||!data)return;setNativeTime(model,data.duration*Math.max(0,Math.min(1,v)));slider.value=Math.round(v*1000);},
  placeLights(force=false){const mode=studio?.$('sceneMode')?.value||'free',preset=studio?.$('lightPreset')?.value||'soft',a=THREE.MathUtils.degToRad(+(studio?.$('lightAngle')?.value||0));floor.visible=mode==='studio';key.intensity=preset==='contrast'?4:preset==='even'?2.2:2.1;fill.intensity=preset==='contrast'?.55:preset==='even'?1.8:.75;key.position.set(Math.cos(a)*2,2,Math.sin(a)*2+1.5);if(force)fit();}
