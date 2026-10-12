@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabat,generateMahabatNative} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
+import {buildNestTemplate,buildNestConfig,regularPreview} from '../studio-src/nesting-bridge.js';
 
 const $=id=>document.getElementById(id);
 const host=$('view3d'),status=$('status'),fold=$('fold'),facts=$('facts');
@@ -53,7 +54,7 @@ function report(){
 
 function rebuild(){
  try{
-  playing=false;$('play').textContent='▶ تشغيل';const p=inputs();engineResult=generateMahabat(currentCode,p);nativeData=generateMahabatNative(currentCode,p);disposeModel();applyArtworkTexture();model=buildNativeModel(nativeData,materialSet,{gpu:false});scene.add(model.root);applyTime(+fold.value/1000);draw2D(engineResult);report();fit();setStatus(`تم بناء ${engineResult.code} من Mahabat Engine · ${engineResult.material.name}`);
+  playing=false;$('play').textContent='▶ تشغيل';const p=inputs();engineResult=generateMahabat(currentCode,p);nativeData=generateMahabatNative(currentCode,p);disposeModel();applyArtworkTexture();model=buildNativeModel(nativeData,materialSet,{gpu:false});scene.add(model.root);applyTime(+fold.value/1000);draw2D(engineResult);report();fit();updateNestInputPreview();setStatus(`تم بناء ${engineResult.code} من Mahabat Engine · ${engineResult.material.name}`);
  }catch(err){setStatus(err.userMessage||err.message||String(err),true);console.error(err);}
 }
 
@@ -75,9 +76,44 @@ $('surfaceFinish').onchange=applyArtworkTexture;
 $('exportSvg').onclick=()=>{
  if(!engineResult)return;const serializer=new XMLSerializer(),svg=$('dieline').cloneNode(true);svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('width',engineResult.width+'mm');svg.setAttribute('height',engineResult.height+'mm');svg.setAttribute('viewBox',`0 0 ${engineResult.width} ${engineResult.height}`);const blob=new Blob([serializer.serializeToString(svg)],{type:'image/svg+xml'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${currentCode}-${engineResult.width.toFixed(1)}x${engineResult.height.toFixed(1)}.svg`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);setStatus('تم تنزيل SVG من نفس هندسة محرك مهابة بمقياس 1:1.');
 };
-$('nestingGate').onclick=()=>setStatus('المونتاج لن يُفعّل حتى توصيل NestEngine الأصلي بنفس Polygon — بدون أي heuristic بديل.',false);
 
-for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===button));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$('view'+button.dataset.view).classList.add('active');resize();};
+function nestSettings(){return {sheetWidth:+$('nestW').value,sheetHeight:+$('nestH').value,gripper:+$('nestGrip').value,gap:+$('nestGap').value,rotation:$('nestRotation').value};}
+function nestEngine(){return globalThis.NestEngine||null;}
+function updateNestInputPreview(){
+ if(!engineResult)return;
+ try{
+  const T=buildNestTemplate(engineResult),c=buildNestConfig(nestSettings());
+  $('nestFacts').innerHTML=`<b>${T.code}</b><br>Outline points: ${T.polygon.length}<br>Cut segments: ${T.cuts.length}<br>Creases: ${T.creases.length}<br>Sheet: ${c.sheetWidth} × ${c.sheetHeight} mm<br>Effective: ${c.W.toFixed(1)} × ${c.H.toFixed(1)} mm<br>Gap: ${c.clearance.toFixed(1)} mm<br>Angles: ${c.angles.join('°, ')}°`;
+  drawNestSheet(T,c,[]);
+ }catch(err){$('nestFacts').textContent=err.message;}
+}
+function drawNestSheet(T,c,layout){
+ const svg=$('nestSvg'),ns='http://www.w3.org/2000/svg';svg.replaceChildren();svg.setAttribute('viewBox',`0 0 ${c.sheetWidth} ${c.sheetHeight}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+ const sheet=document.createElementNS(ns,'rect');sheet.setAttribute('x',0);sheet.setAttribute('y',0);sheet.setAttribute('width',c.sheetWidth);sheet.setAttribute('height',c.sheetHeight);sheet.setAttribute('fill','#fff');sheet.setAttribute('stroke','#8da2ae');sheet.setAttribute('stroke-width','1');svg.append(sheet);
+ const grip=document.createElementNS(ns,'rect');grip.setAttribute('x',0);grip.setAttribute('y',0);grip.setAttribute('width',c.sheetWidth);grip.setAttribute('height',c.offsetY);grip.setAttribute('fill','#f6ede0');svg.append(grip);
+ const work=document.createElementNS(ns,'rect');work.setAttribute('x',c.offsetX);work.setAttribute('y',c.offsetY);work.setAttribute('width',c.W);work.setAttribute('height',c.H);work.setAttribute('fill','none');work.setAttribute('stroke','#2f8794');work.setAttribute('stroke-dasharray','6 4');work.setAttribute('stroke-width','1');svg.append(work);
+ if(!layout.length){const p=document.createElementNS(ns,'polygon');p.setAttribute('points',T.polygon.map(q=>`${q[0]+c.offsetX},${q[1]+c.offsetY}`).join(' '));p.setAttribute('fill','#d9e8ea');p.setAttribute('stroke','#173d4f');p.setAttribute('stroke-width','1');svg.append(p);return;}
+ const vs=nestEngine().makeVariants(T);
+ for(const item of layout){const v=vs[item.r/90],p=document.createElementNS(ns,'polygon');p.setAttribute('points',v.p.map(q=>`${q[0]+item.x+c.offsetX},${q[1]+item.y+c.offsetY}`).join(' '));p.setAttribute('fill','#d9e8ea');p.setAttribute('stroke','#173d4f');p.setAttribute('stroke-width','1');svg.append(p);}
+}
+function runNest(){
+ if(!engineResult)return;
+ const engine=nestEngine();
+ if(!engine){$('nestEngineBadge').textContent='NestEngine المحلي غير موجود';$('nestResult').innerHTML='تم تجهيز الربط والهندسة الحقيقية، لكن ملف <code>studio-src/nest-engine.js</code> الكامل لم يُنسخ بعد إلى المستودع الجديد. لن يتم تشغيل بديل تقريبي.';setStatus('واجهة المونتاج جاهزة، وباقي نسخ NestEngine الأصلي محليًا.',true);return;}
+ try{
+  const {template,config,result}=regularPreview(engine,engineResult,nestSettings()),best=result.results?.[0];
+  if(!best){$('nestResult').textContent='لا يوجد تكرار منتظم صالح بهذه الإعدادات.';drawNestSheet(template,config,[]);return;}
+  drawNestSheet(template,config,best.layout);const used=best.layout.length,util=(used*result.area/(config.sheetWidth*config.sheetHeight)*100).toFixed(1);
+  $('nestResult').innerHTML=`<b>${used} قطعة / شيت</b><br>${best.name}<br>استغلال مساحة القوالب: ${util}%<br>المساحة المستخدمة: ${best.w.toFixed(1)} × ${best.h.toFixed(1)} mm`;
+  $('nestEngineBadge').textContent='NestEngine الأصلي · Regular pass';setStatus(`تم تشغيل NestEngine على Outline الحقيقي: ${used} قطعة/شيت.`);
+ }catch(err){$('nestResult').textContent=err.message;setStatus(err.message,true);}
+}
+$('nestingGate').onclick=()=>{switchView('nest');updateNestInputPreview();};
+$('runNest').onclick=runNest;
+for(const id of['nestW','nestH','nestGrip','nestGap','nestRotation'])$(id).onchange=updateNestInputPreview;
+
+function switchView(name){document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$('view'+name).classList.add('active');resize();}
+for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>{switchView(button.dataset.view);if(button.dataset.view==='nest')updateNestInputPreview();};
 function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(host);
 function frame(now){requestAnimationFrame(frame);if(playing){let p=((now-playStart)/5200);if(p>=1){p=1;playing=false;$('play').textContent='▶ تشغيل';}applyTime(p);}controls.update();renderer.render(scene,camera);}requestAnimationFrame(frame);
