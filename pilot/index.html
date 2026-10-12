@@ -14,7 +14,6 @@
   <div class="brand"><strong>MAHABAT</strong><span>Packaging Lab · Native Engine</span></div>
   <div class="header-actions"><span class="badge">mahaba_library2</span><span class="badge success">Mahabat Engine</span></div>
 </header>
-
 <section id="libraryScreen" class="library-screen">
   <div class="library-hero">
     <div><span class="eyebrow">مكتبة الاختبار المستقلة</span><h1>القوالب المحوّلة إلى محرك مهابة</h1><p>نختبر هنا الهندسة، الخامات، التصميم والـ3D والمونتاج قبل نقل أي تطوير إلى المنتج الرئيسي.</p></div>
@@ -28,62 +27,38 @@
     </article>
   </div>
 </section>
-
 <main id="studioScreen" class="studio-screen hidden">
   <aside class="panel controls">
     <div class="studio-head"><button id="backLibrary" class="back">← المكتبة</button><div><small>Native Template</small><b id="activeCode">EVC11001</b></div></div>
     <h2>المقاسات والخامة</h2>
-    <div class="grid3">
-      <label>الطول L<input id="L" type="number" value="125" min="40"></label>
-      <label>العرض W<input id="W" type="number" value="105" min="30"></label>
-      <label>الارتفاع H<input id="H" type="number" value="88" min="30"></label>
-    </div>
+    <div class="grid3"><label>الطول L<input id="L" type="number" value="125" min="40"></label><label>العرض W<input id="W" type="number" value="105" min="30"></label><label>الارتفاع H<input id="H" type="number" value="88" min="30"></label></div>
     <label>نوع القياس<select id="DT"><option value="1">داخلي ID</option><option value="2">خارجي OD</option><option value="3">Score to Score</option></select></label>
     <label>الخامة<select id="MAT"><option value="1">E Flute · 1.5 mm</option><option value="2">B Flute · 3 mm</option><option value="3">C Flute · 4 mm</option><option value="4">BC Double Wall · 6.5 mm</option></select></label>
     <label>اتجاه الفلوت<select id="FD"><option value="2">FD_Y</option><option value="1">FD_X</option></select></label>
-    <button id="apply" class="primary">تطبيق وإعادة بناء القالب</button>
-    <div id="status" class="status">جاهز</div>
-
+    <button id="apply" class="primary">تطبيق وإعادة بناء القالب</button><div id="status" class="status">جاهز</div>
     <div class="accordion open"><button class="accordion-title" type="button">التصميم على المجسم <span>⌄</span></button><div class="accordion-body">
       <label class="upload">ارفع Artwork للسطح الخارجي<input id="artwork" type="file" accept="image/png,image/jpeg,image/webp"></label>
       <div class="slider-row"><label>الحجم <span id="artScaleVal">100%</span><input id="artScale" type="range" min="25" max="300" value="100"></label></div>
       <div class="grid2"><label>أفقي X<input id="artX" type="range" min="-100" max="100" value="0"></label><label>رأسي Y<input id="artY" type="range" min="-100" max="100" value="0"></label></div>
       <label>الدوران <span id="artRotVal">0°</span><input id="artRot" type="range" min="-180" max="180" value="0"></label>
-      <label>مظهر السطح<select id="surfaceFinish"><option value="matte">Matte</option><option value="satin">Satin</option><option value="gloss">Gloss</option></select></label>
-      <button id="clearArtwork">إزالة التصميم</button>
+      <label>مظهر السطح<select id="surfaceFinish"><option value="matte">Matte</option><option value="satin">Satin</option><option value="gloss">Gloss</option></select></label><button id="clearArtwork">إزالة التصميم</button>
     </div></div>
-
-    <div class="accordion open"><button class="accordion-title" type="button">الطي <span>⌄</span></button><div class="accordion-body">
-      <input id="fold" type="range" min="0" max="1000" value="1000">
-      <div class="row"><button id="play">▶ تشغيل</button><button id="flat">2D Flat</button><button id="closed">Closed</button></div>
-    </div></div>
-
+    <div class="accordion open"><button class="accordion-title" type="button">الطي <span>⌄</span></button><div class="accordion-body"><input id="fold" type="range" min="0" max="1000" value="1000"><div class="row"><button id="play">▶ تشغيل</button><button id="flat">2D Flat</button><button id="closed">Closed</button></div></div></div>
     <div class="accordion open"><button class="accordion-title" type="button">المونتاج <span>⌄</span></button><div class="accordion-body">
       <div class="grid2"><label>عرض الشيت mm<input id="nestW" type="number" value="1000"></label><label>ارتفاع الشيت mm<input id="nestH" type="number" value="690"></label></div>
       <div class="grid2"><label>البنسة mm<input id="nestGrip" type="number" value="10"></label><label>الفاصل mm<input id="nestGap" type="number" value="3" step="0.1"></label></div>
       <label>الدوران<select id="nestRotation"><option value="half">0° / 180°</option><option value="all">0° / 90° / 180° / 270°</option><option value="none">0° فقط</option></select></label>
-      <button id="nestingGate" class="primary">فتح المونتاج داخل الاستوديو</button>
-      <small class="note">المونتاج يأخذ نفس Outline الخارج من Mahabat Engine. لا يتم استخدام Bounding Box بدل القالب.</small>
+      <button id="nestingGate" class="primary">فتح المونتاج داخل الاستوديو</button><small class="note">المونتاج يأخذ نفس Outline الخارج من Mahabat Engine. لا يتم استخدام Bounding Box بدل القالب.</small>
     </div></div>
-
-    <div class="accordion"><button class="accordion-title" type="button">الإنتاج <span>⌄</span></button><div class="accordion-body">
-      <button id="exportSvg">تنزيل SVG 1:1</button>
-    </div></div>
-    <div class="facts" id="facts"></div>
+    <div class="accordion"><button class="accordion-title" type="button">الإنتاج <span>⌄</span></button><div class="accordion-body"><button id="exportSvg">تنزيل SVG 1:1</button></div></div><div class="facts" id="facts"></div>
   </aside>
   <section class="workspace">
     <div class="toolbar"><button data-view="3d" class="active">3D</button><button data-view="2d">Dieline 2D</button><button data-view="nest">Nesting</button><span id="engineState">Mahabat Native · One Geometry Source</span></div>
-    <div id="view3d" class="view active"></div>
-    <div id="view2d" class="view"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
-    <div id="viewnest" class="view nesting-view">
-      <div class="nesting-head"><div><b>مونتاج الشيت</b><span id="nestEngineBadge">Exact geometry bridge ready</span></div><button id="runNest">تشغيل NestEngine</button></div>
-      <div class="nesting-layout">
-        <div class="sheet-wrap"><svg id="nestSvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
-        <aside class="nest-results"><h3>بيانات الإدخال</h3><div id="nestFacts"></div><h3>النتيجة</h3><div id="nestResult">لم يتم التشغيل بعد.</div></aside>
-      </div>
-    </div>
+    <div id="view3d" class="view active"></div><div id="view2d" class="view"><svg id="dieline" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div id="viewnest" class="view nesting-view"><div class="nesting-head"><div><b>مونتاج الشيت</b><span id="nestEngineBadge">Mahaba NestEngine · exact polygon regular mode</span></div><button id="runNest">تشغيل المونتاج</button></div><div class="nesting-layout"><div class="sheet-wrap"><svg id="nestSvg" xmlns="http://www.w3.org/2000/svg"></svg></div><aside class="nest-results"><h3>بيانات الإدخال</h3><div id="nestFacts"></div><h3>النتيجة</h3><div id="nestResult">لم يتم التشغيل بعد.</div></aside></div></div>
   </section>
 </main>
+<script src="../studio-src/nest-engine-core.js"></script>
 <script type="module" src="./pilot.js"></script>
 </body>
 </html>
