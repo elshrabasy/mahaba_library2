@@ -14,3 +14,9 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - name: Check browser pilot modules
+        run: |
+          node --check pilot/pilot.js
+          node --check studio-src/native_runtime.js
+          node --check studio-src/native_gpu.js
+          node --check engine/mahabat-native.js
