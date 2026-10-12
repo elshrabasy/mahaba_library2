@@ -14,11 +14,16 @@ jobs:
         with:
           node-version: 22
       - run: npm test
-      - name: Check browser pilot modules
+      - name: Check browser studio modules
         run: |
           node --check pilot/pilot.js
+          node --check pilot/studio-v2.js
+          node --check studio-src/mahabat-shared-studio.js
+          node --check studio-src/shared-studio.js
+          node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js
           node --check studio-src/native_gpu.js
           node --check studio-src/nest-engine-core.js
           node --check studio-src/nesting-bridge.js
           node --check engine/mahabat-native.js
+          node --check engine/registry.js
