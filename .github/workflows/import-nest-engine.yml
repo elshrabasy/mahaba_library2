@@ -1,0 +1,35 @@
+name: Import exact NestEngine
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [engine-integration-v1]
+    paths:
+      - .github/workflows/import-nest-engine.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: engine-integration-v1
+          fetch-depth: 0
+      - name: Fetch exact source engine
+        run: |
+          curl -fsSL \
+            https://raw.githubusercontent.com/elshrabasy/library_mahaba/904652622bb6898278b1232eaed332be2195f76c/Alamal_3D_Gallery/assets/studio/nest-engine.js \
+            -o /tmp/nest-engine.js
+          test "$(git hash-object /tmp/nest-engine.js)" = "4d44fa84eac01c154596c5624cc486dc4d362b97"
+          cp /tmp/nest-engine.js studio-src/nest-engine.js
+      - name: Commit exact source copy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio-src/nest-engine.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Import exact NestEngine from library_mahaba baseline"
+          git push origin HEAD:engine-integration-v1
