@@ -80,7 +80,7 @@ export class MahabatSharedStudio extends SharedStudio {
     let transparent=0,total=sw*sh,borderLum=0,borderCount=0;for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){const i=(y*sw+x)*4,a=sd[i+3]/255;if(a<.92)transparent++;if(x<3||y<3||x>=sw-3||y>=sh-3){borderLum+=(sd[i]*.2126+sd[i+1]*.7152+sd[i+2]*.0722)/255;borderCount++;}}
     const useAlpha=transparent/total>.02,bg=borderCount?borderLum/borderCount:1,invert=!useAlpha&&bg>.55;
     const placed=document.createElement('canvas');placed.width=w;placed.height=h;const px=placed.getContext('2d',{willReadFrequently:true});drawPlaced(px,image);const pd=px.getImageData(0,0,w,h),d=pd.data;
-    for(let i=0;i<d.length;i+=4){const a=d[i+3]/255,lum=(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722)/255;let mask=useAlpha?a:(invert?1-lum:lum);mask=Math.max(0,Math.min(1,(mask-.04)/.92));const v=Math.round(mask*255);d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}px.putImageData(pd,0,0);return placed;
+    for(let i=0;i<d.length;i+=4){const a=d[i+3]/255,lum=(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722)/255;let mask=useAlpha?a:a*(invert?1-lum:lum);mask=Math.max(0,Math.min(1,(mask-.04)/.92));const v=Math.round(mask*255);d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}px.putImageData(pd,0,0);return placed;
   }
 
   async bake(s,d){
