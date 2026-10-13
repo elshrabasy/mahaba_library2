@@ -1,0 +1,27 @@
+{
+  "benchmark_version":"1.0.0",
+  "template_id":"MAH-FEC-STE-001",
+  "template_name":"Straight Tuck End",
+  "status":"SKELETON",
+  "reference_source":null,
+  "cases":[
+    {
+      "case_id":"STE-FBB-001",
+      "input":{"L":215,"W":80,"H":45,"dimension_mode":"ID","material_id":"FBB-350-055"},
+      "checks":[
+        {"id":"final.length","label":"Final Length","expected":215,"unit":"mm","tolerance":0.25,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"final.width","label":"Final Width","expected":80,"unit":"mm","tolerance":0.25,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"final.height","label":"Final Height","expected":45,"unit":"mm","tolerance":0.25,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"dieline.width","label":"Dieline Width","expected":null,"unit":"mm","tolerance":0.25,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"dieline.height","label":"Dieline Height","expected":null,"unit":"mm","tolerance":0.25,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"material.thickness","label":"Material Thickness Behaviour","expected":0.55,"unit":"mm","tolerance":0.05,"actual":null,"error":null,"status":"NEEDS_REVIEW"},
+        {"id":"fold.sequence","label":"Fold Sequence","expected":"REFERENCE_REQUIRED","actual":null,"status":"NEEDS_REVIEW"},
+        {"id":"assembly.3d","label":"3D Assembly","expected":"REFERENCE_REQUIRED","actual":null,"status":"NEEDS_REVIEW"},
+        {"id":"artwork.mapping","label":"Artwork Mapping","expected":"REFERENCE_REQUIRED","actual":null,"status":"NEEDS_REVIEW"},
+        {"id":"nesting.readiness","label":"Nesting Readiness","expected":true,"actual":null,"status":"NEEDS_REVIEW"},
+        {"id":"metrics.extraction","label":"Cost Variables Extraction","expected":true,"actual":null,"status":"NEEDS_REVIEW"},
+        {"id":"production.readiness","label":"Production Readiness","expected":true,"actual":null,"status":"NEEDS_REVIEW"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://mahabatalfan.local/schemas/TemplateDefinition.schema.json",
+  "title":"Mahabat TemplateDefinition",
+  "type":"object",
+  "required":["schema_version","template_id","name","category","version","parameters","constraints","topology","rule_refs"],
+  "properties":{
+    "schema_version":{"const":"1.0.0"},
+    "template_id":{"type":"string"},
+    "name":{"type":"string"},
+    "category":{"type":"string"},
+    "family":{"type":["string","null"]},
+    "standard_code":{"type":["string","null"]},
+    "version":{"type":"string"},
+    "parameters":{"type":"array"},
+    "constraints":{"type":"array"},
+    "topology":{"type":"object"},
+    "rule_refs":{"type":"array","items":{"type":"string"}}
+  },
+  "additionalProperties":true
+}

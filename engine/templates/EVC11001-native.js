@@ -22,18 +22,11 @@ function exactTuckPolygon(result){
   const edge=result.lines?.filter(l=>l.type==='cut'&&l.role==='tuck-edge')||[];
   if(edge.length!==3)return;
   const ordered=[];
-  for(const l of edge){
-    const pts=sampleArc(l);
-    if(ordered.length&&same(ordered.at(-1),pts[0]))ordered.push(...pts.slice(1));
-    else ordered.push(...pts);
-  }
+  for(const l of edge){const pts=sampleArc(l);if(ordered.length&&same(ordered.at(-1),pts[0]))ordered.push(...pts.slice(1));else ordered.push(...pts);}
   if(ordered.length<4)return;
   const hinge=[...tuck.hinge].sort((a,b)=>a[0]-b[0]),leftH=hinge[0],rightH=hinge[1];
-  // Source cut path is right outer edge -> crown -> left outer edge after the screen transform.
-  let outer=ordered;
-  if(outer[0][0]<outer.at(-1)[0])outer=[...outer].reverse();
-  const rightOuter=outer[0],leftOuter=outer.at(-1);
-  const rightShoulder=[rightH[0],rightOuter[1]],leftShoulder=[leftH[0],leftOuter[1]];
+  let outer=ordered;if(outer[0][0]<outer.at(-1)[0])outer=[...outer].reverse();
+  const rightOuter=outer[0],leftOuter=outer.at(-1),rightShoulder=[rightH[0],rightOuter[1]],leftShoulder=[leftH[0],leftOuter[1]];
   tuck.poly=[leftH,rightH,rightShoulder,...outer,leftShoulder];
   tuck.nativeSilhouetteSource='exact-cut-path';
 }

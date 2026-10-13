@@ -1,0 +1,25 @@
+{
+  "benchmark_version":"1.0.0",
+  "template_id":"MAH-FEC-STE-001",
+  "template_name":"Straight Tuck End",
+  "status":"REFERENCE_PENDING_EXTERNAL_CALIBRATION",
+  "reference_source":"Mahabat Engineering Core architecture reference; external manufacturing reference still required for compensation approval",
+  "cases":[{
+    "case_id":"STE-FBB-215x80x45-ID",
+    "input":{"L":215,"W":80,"H":45,"dimension_mode":"ID","material_id":"FBB-350-055","grain_direction":"Y","glue_flap":15,"bleed":3,"safe_margin":4},
+    "checks":[
+      {"id":"final.length","label":"Final Length contract","expected":215,"unit":"mm","tolerance":0.001,"actual":null},
+      {"id":"final.width","label":"Final Width contract","expected":80,"unit":"mm","tolerance":0.001,"actual":null},
+      {"id":"final.height","label":"Final Height contract","expected":45,"unit":"mm","tolerance":0.001,"actual":null},
+      {"id":"material.thickness","label":"Material Thickness","expected":0.55,"unit":"mm","tolerance":0.001,"actual":null},
+      {"id":"panels.count","label":"Panel topology count","expected":13,"tolerance":0,"actual":null},
+      {"id":"folds.count","label":"Fold topology count","expected":12,"tolerance":0,"actual":null},
+      {"id":"dieline.width","label":"Dieline Width vs external reference","expected":null,"unit":"mm","tolerance":0.25,"actual":null},
+      {"id":"dieline.height","label":"Dieline Height vs external reference","expected":null,"unit":"mm","tolerance":0.25,"actual":null},
+      {"id":"crease.compensation","label":"Crease compensation vs calibrated reference","expected":null,"unit":"mm","tolerance":0.15,"actual":null},
+      {"id":"nesting.readiness","label":"True polygon nesting ready","expected":true,"actual":null},
+      {"id":"metrics.extraction","label":"Production metrics extracted","expected":true,"actual":null},
+      {"id":"production.validation","label":"Production validation available","expected":true,"actual":null}
+    ]
+  }]
+}

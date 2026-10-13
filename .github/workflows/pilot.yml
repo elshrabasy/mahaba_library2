@@ -18,7 +18,10 @@ jobs:
         run: |
           node --check pilot/pilot.js
           node --check pilot/studio-v2.js
+          node --check pilot/core-v1.js
           node --check studio-src/mahabat-shared-studio.js
+          node --check studio-src/engineering-panel.js
+          node --check studio-src/production-link.js
           node --check studio-src/shared-studio.js
           node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js
@@ -27,3 +30,13 @@ jobs:
           node --check studio-src/nesting-bridge.js
           node --check engine/mahabat-native.js
           node --check engine/registry.js
+          node --check core/geometry/kernel.js
+          node --check core/metrics/engine.js
+          node --check core/folding/graph.js
+          node --check core/validation/engine.js
+          node --check core/cost/engine.js
+          node --check core/machines/engine.js
+          node --check engines/nesting/orchestrator.js
+          node --check engines/production/optimizer.js
+          node --check services/engineering-core.js
+          node --check templates/straight-tuck-end/generate.js
