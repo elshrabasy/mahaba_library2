@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import {SharedStudio} from './shared-studio.js';
 
 // Keep the original Mahaba Library studio behaviour intact.
@@ -5,6 +6,7 @@ import {SharedStudio} from './shared-studio.js';
 export class MahabatSharedStudio extends SharedStudio {
   constructor(viewer){
     super(viewer);
+    this.ensureFoilEnvironment();
     const nestButton=this.rail?.querySelector('[data-pane="nest"]');
     if(nestButton)nestButton.onclick=()=>{this.setPane(null);this.openNesting();};
     const nestPanel=this.root?.querySelector('[data-panel="nest"]');
@@ -21,6 +23,14 @@ export class MahabatSharedStudio extends SharedStudio {
       @media(max-width:760px){.ms-layout.inspector-closed{grid-template-columns:56px minmax(0,1fr)!important}.ms-nesting-workspace{border-radius:0!important}}
       `;document.head.append(style);
     }
+  }
+
+  ensureFoilEnvironment(){
+    const scene=this.v?.scene,renderer=this.v?.renderer;if(!scene||!renderer||scene.environment)return;
+    const w=384,h=192,data=new Float32Array(w*h*4),panels=[[-1.15,.38,.28,.42,7.5],[1.35,.12,.24,.7,4.8],[.15,1.0,.75,.18,5.2],[-2.7,-.18,.35,.58,2.3]];
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const lon=x/w*Math.PI*2-Math.PI,lat=(.5-y/h)*Math.PI;let value=.2;for(const [px,py,sx,sy,p] of panels){let dx=Math.abs(lon-px);dx=Math.min(dx,Math.PI*2-dx);value+=p*Math.exp(-Math.pow(dx/sx,6)-Math.pow((lat-py)/sy,6));}const i=(y*w+x)*4;data[i]=data[i+1]=data[i+2]=value;data[i+3]=1;}
+    const source=new THREE.DataTexture(data,w,h,THREE.RGBAFormat,THREE.FloatType);source.mapping=THREE.EquirectangularReflectionMapping;source.needsUpdate=true;const pmrem=new THREE.PMREMGenerator(renderer);
+    try{this.v.mahabaEnvironmentTarget=pmrem.fromEquirectangular(source);scene.environment=this.v.mahabaEnvironmentTarget.texture;scene.environmentIntensity=1;}finally{source.dispose();pmrem.dispose();}
   }
 
   async loadSheets(data){
@@ -64,10 +74,23 @@ export class MahabatSharedStudio extends SharedStudio {
     finally{this.dimensionsBusy=false;button.disabled=original.disabled=false;button.textContent='تطبيق الأبعاد';}
   }
 
-  // Important: foil / Spot UV / artwork must stay exactly on the original SharedStudio path.
-  // Do not recolour the base artwork and do not add a second metalness/clearcoat fallback here.
-  async bake(s,d){return super.bake(s,d);}
-  async applyAll(){return super.applyAll();}
+  async makeEffectMask(image,w,h,drawPlaced){
+    if(!image)return null;
+    const source=document.createElement('canvas'),sw=Math.min(512,image.naturalWidth||image.width),sh=Math.max(1,Math.round(sw*(image.naturalHeight||image.height)/(image.naturalWidth||image.width)));source.width=sw;source.height=sh;const sx=source.getContext('2d',{willReadFrequently:true});sx.drawImage(image,0,0,sw,sh);const sd=sx.getImageData(0,0,sw,sh).data;
+    let transparent=0,total=sw*sh,borderLum=0,borderCount=0;for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){const i=(y*sw+x)*4,a=sd[i+3]/255;if(a<.92)transparent++;if(x<3||y<3||x>=sw-3||y>=sh-3){borderLum+=(sd[i]*.2126+sd[i+1]*.7152+sd[i+2]*.0722)/255;borderCount++;}}
+    const useAlpha=transparent/total>.02,bg=borderCount?borderLum/borderCount:1,invert=!useAlpha&&bg>.55;
+    const placed=document.createElement('canvas');placed.width=w;placed.height=h;const px=placed.getContext('2d',{willReadFrequently:true});drawPlaced(px,image);const pd=px.getImageData(0,0,w,h),d=pd.data;
+    for(let i=0;i<d.length;i+=4){const a=d[i+3]/255,lum=(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722)/255;let mask=useAlpha?a:(invert?1-lum:lum);mask=Math.max(0,Math.min(1,(mask-.04)/.92));const v=Math.round(mask*255);d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}px.putImageData(pd,0,0);return placed;
+  }
+
+  async bake(s,d){
+    const images=await Promise.all(['image','foil','uv'].map(k=>this.image(s[k]))),result={},ratio=d.objRectWidth/d.objRectHeight,w=Math.round(ratio>=1?1536:1536*ratio),h=Math.round(ratio>=1?1536/ratio:1536);
+    const drawPlaced=(ctx,im)=>{if(!im)return;const px=w/d.objRectWidth,k=Math.min(d.objRectWidth/(im.naturalWidth||im.width),d.objRectHeight/(im.naturalHeight||im.height))*px*s.scale/100;ctx.save();ctx.translate(w/2+s.x*px,h/2+s.y*px);ctx.rotate(s.angle*Math.PI/180);ctx.scale(k,k);ctx.drawImage(im,-(im.naturalWidth||im.width)/2,-(im.naturalHeight||im.height)/2,im.naturalWidth||im.width,im.naturalHeight||im.height);ctx.restore();};
+    let artworkCanvas=null;if(images[0]){artworkCanvas=document.createElement('canvas');artworkCanvas.width=w;artworkCanvas.height=h;const ctx=artworkCanvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);drawPlaced(ctx,images[0]);const t=new THREE.CanvasTexture(artworkCanvas);t.channel=3;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result.map=t;}
+    const foilCanvas=await this.makeEffectMask(images[1],w,h,drawPlaced),uvCanvas=await this.makeEffectMask(images[2],w,h,drawPlaced);
+    for(const [key,canvas] of [['foil',foilCanvas],['uv',uvCanvas]])if(canvas){const t=new THREE.CanvasTexture(canvas);t.channel=3;t.colorSpace=THREE.NoColorSpace;t.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[key]=t;}
+    const preview=document.createElement('canvas');preview.width=w;preview.height=h;const pc=preview.getContext('2d');if(artworkCanvas)pc.drawImage(artworkCanvas,0,0);if(foilCanvas){const tint=document.createElement('canvas');tint.width=w;tint.height=h;const tc=tint.getContext('2d');tc.fillStyle=s.foilColor||'#d7ad55';tc.fillRect(0,0,w,h);tc.globalCompositeOperation='destination-in';tc.drawImage(foilCanvas,0,0);pc.drawImage(tint,0,0);}result.canvas=preview;return result;
+  }
 
   styleNestingFrame(){
     const frame=this.$('nesting'),doc=frame?.contentDocument;if(!doc||doc.getElementById('mahabatNestTheme'))return;
