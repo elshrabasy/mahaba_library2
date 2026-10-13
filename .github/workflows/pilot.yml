@@ -34,4 +34,7 @@ jobs:
           node --check core/validation/engine.js
           node --check core/cost/engine.js
           node --check core/machines/engine.js
+          node --check engines/nesting/orchestrator.js
+          node --check engines/production/optimizer.js
+          node --check services/engineering-core.js
           node --check templates/straight-tuck-end/generate.js
