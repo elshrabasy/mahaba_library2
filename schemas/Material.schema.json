@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://mahabatalfan.local/schemas/Material.schema.json",
+  "title":"Mahabat Material",
+  "type":"object",
+  "required":["material_id","material_family","thickness_mm","grain_direction","bend_behavior","crease_behavior","render_profile"],
+  "properties":{
+    "material_id":{"type":"string"},
+    "material_family":{"type":"string"},
+    "gsm":{"type":["number","null"],"minimum":0},
+    "thickness_mm":{"type":"number","exclusiveMinimum":0},
+    "flute":{"type":["string","null"]},
+    "grain_direction":{"enum":["X","Y","NONE","VARIABLE"]},
+    "bend_behavior":{"type":"string"},
+    "crease_behavior":{"type":"string"},
+    "cost_per_m2":{"type":["number","null"],"minimum":0},
+    "render_profile":{"type":"object","additionalProperties":true}
+  },
+  "additionalProperties":true
+}
