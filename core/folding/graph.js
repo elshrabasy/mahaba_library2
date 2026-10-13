@@ -1,0 +1,32 @@
+// Mahabat Engineering Core V1 — fold/assembly graph utilities.
+export function buildFoldGraph(model){
+  const panels=new Map((model.panels||[]).map(p=>[p.panel_id,p]));
+  const folds=(model.folds||[]).map(f=>({...f}));
+  const errors=[];
+  for(const f of folds){
+    if(f.parent_panel&&!panels.has(f.parent_panel))errors.push(`missing parent panel ${f.parent_panel}`);
+    if(!panels.has(f.child_panel))errors.push(`missing child panel ${f.child_panel}`);
+    if(!f.fold_axis?.a||!f.fold_axis?.b)errors.push(`missing axis for ${f.fold_id}`);
+  }
+  const byParent=new Map();
+  for(const f of folds){const k=f.parent_panel||'__root';if(!byParent.has(k))byParent.set(k,[]);byParent.get(k).push(f);}
+  for(const v of byParent.values())v.sort((a,b)=>(a.fold_order??0)-(b.fold_order??0));
+  return {panels,folds,byParent,errors,ok:errors.length===0};
+}
+
+export function foldSequence(model){return [...(model.folds||[])].sort((a,b)=>(a.fold_order??0)-(b.fold_order??0)).map(f=>f.fold_id);}
+
+export function foldState(model,progress=1){
+  const p=Math.max(0,Math.min(1,Number(progress)));
+  return (model.folds||[]).map(f=>({
+    fold_id:f.fold_id,
+    panel_id:f.child_panel,
+    axis:f.fold_axis,
+    direction:f.fold_direction,
+    target_angle_deg:Number(f.target_angle_deg||0),
+    angle_deg:Number(f.target_angle_deg||0)*p*(f.fold_direction==='OUT'?-1:1),
+    order:f.fold_order??0
+  }));
+}
+
+export const FoldingEngine={buildGraph:buildFoldGraph,sequence:foldSequence,state:foldState};
