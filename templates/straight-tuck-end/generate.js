@@ -1,0 +1,91 @@
+import {STRAIGHT_TUCK_END_DEFINITION as DEF} from './template-definition.js';
+import {MaterialRegistry} from '../../core/materials/registry.js';
+import {CompensationEngine} from '../../core/compensation/engine.js';
+import {rect,bbox,polyline} from '../../core/geometry/kernel.js';
+import {attachMetrics} from '../../core/metrics/engine.js';
+import {attachValidation} from '../../core/validation/engine.js';
+
+const num=(v,fallback)=>v==null?fallback:Number(v);
+const copy=p=>p.map(q=>[q[0],q[1]]);
+
+function pathId(prefix,n){return `${prefix}-${String(n).padStart(3,'0')}`;}
+function makeSegments(points,type,role,start=1){return polyline(points,{type,role}).map((s,i)=>({id:pathId(type==='crease'?'CR':'CUT',start+i),role,a:s.a,b:s.b}));}
+function panel(id,name,role,polygon,parent=null){return {panel_id:id,name,role,polygon:copy(polygon),coordinate_system:{origin:[polygon[0][0],polygon[0][1]],x_axis:[1,0],y_axis:[0,1]},dimensions:bbox(polygon),artwork_area:copy(polygon),parent_panel:parent};}
+function crease(id,a,b,role){return {id,role,a:[...a],b:[...b]};}
+function fold(fold_id,crease_id,parent_panel,child_panel,a,b,order,stage,direction='IN',angle=90){return {fold_id,crease_id,parent_panel,child_panel,fold_axis:{a:[a[0],a[1],0],b:[b[0],b[1],0]},fold_direction:direction,target_angle_deg:angle,fold_order:order,stage};}
+
+export function generateStraightTuckEnd(input={}){
+  const p={
+    L:num(input.L,DEF.parameters.L.default),W:num(input.W,DEF.parameters.W.default),H:num(input.H,DEF.parameters.H.default),
+    dimension_mode:String(input.dimension_mode||DEF.parameters.dimension_mode.default).toUpperCase(),
+    material_id:input.material_id||DEF.parameters.material_id.default,
+    grain_direction:String(input.grain_direction||DEF.parameters.grain_direction.default).toUpperCase(),
+    glue_flap:num(input.glue_flap,DEF.parameters.glue_flap.default),bleed:num(input.bleed,DEF.parameters.bleed.default),safe_margin:num(input.safe_margin,DEF.parameters.safe_margin.default)
+  };
+  for(const key of ['L','W','H','glue_flap','bleed','safe_margin']){const spec=DEF.parameters[key];if(!Number.isFinite(p[key])||p[key]<spec.min||p[key]>spec.max)throw new Error(`${key} خارج المجال ${spec.min}–${spec.max} مم.`);}
+  if(!DEF.parameters.dimension_mode.enum.includes(p.dimension_mode))throw new Error('dimension_mode must be ID, OD or SS.');
+  if(!DEF.parameters.grain_direction.enum.includes(p.grain_direction))throw new Error('grain_direction must be X or Y.');
+  const material=MaterialRegistry.require(p.material_id);
+  if(material.family!=='paperboard')throw new Error('Straight Tuck End reference V1 currently accepts paperboard materials only.');
+  const d=material.engineering.thickness_mm;
+  const comp=CompensationEngine.evaluate({ruleSet:'fbb-standard-v1',thickness_mm:d});
+  const c90=comp.values.fold90;
+  const toSS=v=>p.dimension_mode==='ID'?v+2*c90:p.dimension_mode==='OD'?Math.max(.1,v-2*c90):v;
+  const Ls=toSS(p.L),Ws=toSS(p.W),Hs=toSS(p.H),glue=p.glue_flap;
+  const tuckDepth=Math.max(10,Ws-comp.values.tuckDepthReduction),dustDepth=Math.max(8,Ws/2-comp.values.dustClearance),receiverDepth=Math.max(8,Ws*comp.values.receiverFlapDepthFactor);
+  const shoulder=Math.min(Math.max(5,Ws*.09),Math.max(5,Ls*.12));
+  const neck=Math.min(6,Math.max(2,tuckDepth*.18));
+  const x0=glue,x1=x0+Ls,x2=x1+Ws,x3=x2+Ls,x4=x3+Ws;
+  const y0=tuckDepth,y1=y0+Hs;
+
+  const P_BACK=rect(x0,y0,x1,y1),P_SIDE_R=rect(x1,y0,x2,y1),P_FRONT=rect(x2,y0,x3,y1),P_SIDE_L=rect(x3,y0,x4,y1),P_GLUE=rect(0,y0,x0,y1);
+  const T_TOP=[[x0,y1],[x1,y1],[x1-shoulder,y1+neck],[x1-shoulder,y1+tuckDepth],[x0+shoulder,y1+tuckDepth],[x0+shoulder,y1+neck]];
+  const T_BOTTOM=[[x0,y0],[x0+shoulder,y0-neck],[x0+shoulder,0],[x1-shoulder,0],[x1-shoulder,y0-neck],[x1,y0]];
+  const DTR=rect(x1,y1,x2,y1+dustDepth),RTR=rect(x2,y1,x3,y1+receiverDepth),DTL=rect(x3,y1,x4,y1+dustDepth);
+  const DBR=rect(x1,y0-dustDepth,x2,y0),RBR=rect(x2,y0-receiverDepth,x3,y0),DBL=rect(x3,y0-dustDepth,x4,y0);
+
+  const outline=[
+    [0,y0],[x0,y0],[x0+shoulder,y0-neck],[x0+shoulder,0],[x1-shoulder,0],[x1-shoulder,y0-neck],[x1,y0],
+    [x1,y0-dustDepth],[x2,y0-dustDepth],[x2,y0-receiverDepth],[x3,y0-receiverDepth],[x3,y0-dustDepth],[x4,y0-dustDepth],[x4,y0],
+    [x4,y1],[x4,y1+dustDepth],[x3,y1+dustDepth],[x3,y1+receiverDepth],[x2,y1+receiverDepth],[x2,y1+dustDepth],[x1,y1+dustDepth],[x1,y1],
+    [x1-shoulder,y1+neck],[x1-shoulder,y1+tuckDepth],[x0+shoulder,y1+tuckDepth],[x0+shoulder,y1+neck],[x0,y1],[0,y1]
+  ];
+  const cutPaths=makeSegments([...outline,outline[0]],'cut','outer-boundary',1);
+  const creases=[
+    crease('CR-001',[x0,y0],[x0,y1],'glue-fold'),
+    crease('CR-002',[x1,y0],[x1,y1],'body-fold'),
+    crease('CR-003',[x2,y0],[x2,y1],'body-fold'),
+    crease('CR-004',[x3,y0],[x3,y1],'body-fold'),
+    crease('CR-005',[x0,y1],[x1,y1],'top-tuck-fold'),crease('CR-006',[x1,y1],[x2,y1],'top-dust-fold'),crease('CR-007',[x2,y1],[x3,y1],'top-receiver-fold'),crease('CR-008',[x3,y1],[x4,y1],'top-dust-fold'),
+    crease('CR-009',[x0,y0],[x1,y0],'bottom-tuck-fold'),crease('CR-010',[x1,y0],[x2,y0],'bottom-dust-fold'),crease('CR-011',[x2,y0],[x3,y0],'bottom-receiver-fold'),crease('CR-012',[x3,y0],[x4,y0],'bottom-dust-fold')
+  ];
+  const panels=[
+    panel('P_BACK','Back','body',P_BACK,null),panel('P_SIDE_R','Right Side','body',P_SIDE_R,'P_BACK'),panel('P_FRONT','Front','body',P_FRONT,'P_SIDE_R'),panel('P_SIDE_L','Left Side','body',P_SIDE_L,'P_FRONT'),panel('P_GLUE','Glue Flap','glue',P_GLUE,'P_BACK'),
+    panel('T_TOP','Top Tuck','tuck',T_TOP,'P_BACK'),panel('D_TOP_R','Top Dust Right','dust-flap',DTR,'P_SIDE_R'),panel('R_TOP','Top Receiver','receiver-flap',RTR,'P_FRONT'),panel('D_TOP_L','Top Dust Left','dust-flap',DTL,'P_SIDE_L'),
+    panel('T_BOTTOM','Bottom Tuck','tuck',T_BOTTOM,'P_BACK'),panel('D_BOTTOM_R','Bottom Dust Right','dust-flap',DBR,'P_SIDE_R'),panel('R_BOTTOM','Bottom Receiver','receiver-flap',RBR,'P_FRONT'),panel('D_BOTTOM_L','Bottom Dust Left','dust-flap',DBL,'P_SIDE_L')
+  ];
+  const folds=[
+    fold('FOLD-001','CR-002','P_BACK','P_SIDE_R',[x1,y0],[x1,y1],10,'body'),fold('FOLD-002','CR-003','P_SIDE_R','P_FRONT',[x2,y0],[x2,y1],20,'body'),fold('FOLD-003','CR-004','P_FRONT','P_SIDE_L',[x3,y0],[x3,y1],30,'body'),fold('FOLD-004','CR-001','P_BACK','P_GLUE',[x0,y0],[x0,y1],35,'glue'),
+    fold('FOLD-005','CR-006','P_SIDE_R','D_TOP_R',[x1,y1],[x2,y1],50,'top-dust'),fold('FOLD-006','CR-008','P_SIDE_L','D_TOP_L',[x3,y1],[x4,y1],52,'top-dust'),fold('FOLD-007','CR-007','P_FRONT','R_TOP',[x2,y1],[x3,y1],60,'top-receiver'),fold('FOLD-008','CR-005','P_BACK','T_TOP',[x0,y1],[x1,y1],70,'top-tuck'),
+    fold('FOLD-009','CR-010','P_SIDE_R','D_BOTTOM_R',[x1,y0],[x2,y0],80,'bottom-dust'),fold('FOLD-010','CR-012','P_SIDE_L','D_BOTTOM_L',[x3,y0],[x4,y0],82,'bottom-dust'),fold('FOLD-011','CR-011','P_FRONT','R_BOTTOM',[x2,y0],[x3,y0],90,'bottom-receiver'),fold('FOLD-012','CR-009','P_BACK','T_BOTTOM',[x0,y0],[x1,y0],100,'bottom-tuck')
+  ];
+  const bounds=bbox(outline);
+  let model={
+    schema_version:'1.0.0',model_id:`${DEF.template_id}:${p.L}x${p.W}x${p.H}:${p.material_id}:${p.dimension_mode}`,
+    template:{template_id:DEF.template_id,name:DEF.name,category:DEF.category,family:DEF.family,standard_code:DEF.standard_code,version:DEF.version},
+    parameters:{...p,resolved:{L_score:Ls,W_score:Ws,H_score:Hs,tuck_depth:tuckDepth,dust_depth:dustDepth,receiver_depth:receiverDepth,fold90:c90}},
+    material:MaterialRegistry.toModel(material,{grain_direction:p.grain_direction}),
+    compensation:{rule_set:comp.rule_set,rule_set_version:comp.rule_set_version,status:comp.status,rule_status:comp.status,rules_applied:Object.entries(comp.values).map(([rule,value])=>({rule,value_mm:value}))},
+    geometry:{units:'mm',cut_paths:cutPaths,crease_paths:creases,perforation_paths:[],score_paths:[],glue_areas:[{id:'GLUE-001',polygon:copy(P_GLUE)}],safe_zones:[],bleed_zones:[]},
+    panels,folds,
+    assembly:{glue_relations:[{relation_id:'A-GLUE-001',source:'P_GLUE',target:'P_SIDE_L',adhesive:'side_seam'}],lock_tabs:[{relation_id:'LOCK-TOP',source:'T_TOP',target:'R_TOP'},{relation_id:'LOCK-BOTTOM',source:'T_BOTTOM',target:'R_BOTTOM'}],slot_tab_relations:[],assembly_order:['body','glue','top-dust','top-receiver','top-tuck','bottom-dust','bottom-receiver','bottom-tuck'],multi_part_relations:[],legacy_stages:{body:[0,1.5],glue:[1.5,2], 'top-dust':[2,2.5],'top-receiver':[2.5,3],'top-tuck':[3,3.6],'bottom-dust':[3.6,4.1],'bottom-receiver':[4.1,4.6],'bottom-tuck':[4.6,5.2]},legacy_animations:{endTime:5.2,phases:[{Name:'Body',endTime:2,steps:[{endTime:1.5},{endTime:.5}]},{Name:'Top',endTime:3.6,steps:[{endTime:.5},{endTime:.5},{endTime:.6}]},{Name:'Bottom',endTime:5.2,steps:[{endTime:.5},{endTime:.5},{endTime:.6}]}]}},
+    nesting:{outer_polygon:copy(outline),keep_out_zones:[],allowed_rotations_deg:[0,180],grain_restriction:'parallel',minimum_spacing_mm:3,edge_constraints:{left:3,right:3,top:3,bottom:3},gripper_constraint_mm:10,bounds},
+    production:{compatible_processes:[...material.manufacturing.compatible_processes],die_cutting_methods:['platen','cylinder','bobst'],gluing_method:'straight_line_glue',required_operations:['print','crease','die_cut','strip','fold_glue'],machine_constraints:{min_blank_width_mm:50,min_blank_height_mm:50}},
+    metrics:{},validation:{status:'UNVALIDATED',checks:[]}
+  };
+  model=attachMetrics(model);
+  model=attachValidation(model);
+  return model;
+}
+
+export const StraightTuckEnd={definition:DEF,generate:generateStraightTuckEnd};
