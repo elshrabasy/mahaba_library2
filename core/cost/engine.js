@@ -1,0 +1,60 @@
+// Mahabat Production Cost Engine V1.
+// No factory prices are hard-coded here. Profiles supply formulas/rates.
+const n=v=>Number(v||0);
+function evalNode(node,ctx){
+  if(typeof node==='number')return node;
+  if(typeof node==='string')return n(ctx[node]);
+  if(!node||typeof node!=='object')return 0;
+  const args=(node.args||[]).map(x=>evalNode(x,ctx));
+  switch(node.op){
+    case 'const':return n(node.value);
+    case 'var':return n(ctx[node.key]);
+    case 'add':return args.reduce((a,b)=>a+b,0);
+    case 'sub':return (args[0]||0)-(args[1]||0);
+    case 'mul':return args.reduce((a,b)=>a*b,1);
+    case 'div':return (args[1]||0)===0?0:(args[0]||0)/(args[1]||0);
+    case 'max':return Math.max(...args);
+    case 'min':return Math.min(...args);
+    case 'ceil':return Math.ceil(args[0]||0);
+    default:throw new Error(`Unsupported cost formula op: ${node.op}`);
+  }
+}
+
+export const DEFAULT_COST_PROFILE={
+  id:'mahaba-cost-profile-v1-empty',version:'1.0.0',currency:'SAR',status:'UNPRICED',
+  formulas:{
+    paper:{op:'mul',args:[{op:'var',key:'purchased_area_m2'},{op:'var',key:'paper_cost_per_m2'}]},
+    printing:{op:'add',args:[{op:'var',key:'printing_setup_cost'},{op:'mul',args:[{op:'var',key:'sheet_count'},{op:'var',key:'printing_cost_per_sheet'}]}]},
+    lamination:{op:'mul',args:[{op:'var',key:'purchased_area_m2'},{op:'var',key:'lamination_cost_per_m2'}]},
+    foil:{op:'add',args:[{op:'var',key:'foil_setup_cost'},{op:'mul',args:[{op:'var',key:'foil_area_m2'},{op:'var',key:'foil_cost_per_m2'}]}]},
+    uv:{op:'add',args:[{op:'var',key:'uv_setup_cost'},{op:'mul',args:[{op:'var',key:'uv_area_m2'},{op:'var',key:'uv_cost_per_m2'}]}]},
+    die:{op:'var',key:'die_cost'},
+    die_cutting:{op:'add',args:[{op:'var',key:'die_cut_setup_cost'},{op:'mul',args:[{op:'var',key:'quantity'},{op:'var',key:'die_cut_cost_per_piece'}]}]},
+    gluing:{op:'add',args:[{op:'var',key:'glue_setup_cost'},{op:'mul',args:[{op:'var',key:'quantity'},{op:'var',key:'glue_cost_per_piece'}]}]},
+    labor:{op:'var',key:'labor_cost'},
+    overhead:{op:'var',key:'overhead_cost'}
+  }
+};
+
+export function costContext(model,{quantity=1000,pieces_per_sheet=null,waste_percent=5,rates={}}={}){
+  const q=Math.max(1,Math.ceil(quantity)),pps=Math.max(1,Math.floor(pieces_per_sheet||model.metrics?.pieces_per_sheet||1));
+  const goodSheets=Math.ceil(q/pps),waste=Math.max(0,n(waste_percent)),sheetCount=Math.ceil(goodSheets*(1+waste/100));
+  const blankAreaM2=n(model.metrics?.blank_area_mm2)/1e6;
+  const purchasedAreaM2=blankAreaM2*pps*sheetCount;
+  return {
+    quantity:q,pieces_per_sheet:pps,good_sheet_count:goodSheets,sheet_count:sheetCount,waste_percent:waste,
+    blank_area_m2:blankAreaM2,purchased_area_m2:purchasedAreaM2,
+    foil_area_m2:n(model.metrics?.foil_area_mm2)/1e6*q,uv_area_m2:n(model.metrics?.uv_area_mm2)/1e6*q,
+    crease_length_m:n(model.metrics?.crease_length_mm)/1000*q,glue_length_m:n(model.metrics?.glue_length_mm)/1000*q,
+    ...rates
+  };
+}
+
+export function estimateCost(model,options={}){
+  const profile=options.profile||DEFAULT_COST_PROFILE,ctx=costContext(model,options),components={};
+  for(const [name,formula] of Object.entries(profile.formulas||{}))components[name]=evalNode(formula,ctx);
+  const subtotal=Object.values(components).reduce((a,b)=>a+b,0),marginPct=n(options.margin_percent),sellingPrice=marginPct>=100?null:subtotal/(1-marginPct/100),costPerPiece=subtotal/ctx.quantity;
+  return {profile_id:profile.id,profile_version:profile.version,currency:profile.currency||'SAR',status:profile.status||'ACTIVE',context:ctx,components,subtotal,total_cost:subtotal,cost_per_piece:costPerPiece,selling_price:sellingPrice,margin_percent:marginPct};
+}
+
+export const CostEngine={estimate:estimateCost,context:costContext,defaultProfile:DEFAULT_COST_PROFILE};
