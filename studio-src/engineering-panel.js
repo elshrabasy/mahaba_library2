@@ -1,0 +1,56 @@
+// Engineering Core diagnostics embedded inside the existing Mahabat Studio.
+// This is intentionally an additive panel: it does not replace SharedStudio UX.
+const svgIcon=`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12H4Z"/><path d="M8 20v-5h8v5M8 10h8M12 4v6"/></svg>`;
+const fmt=(n,d=1)=>Number.isFinite(Number(n))?Number(n).toFixed(d):'—';
+const area=n=>Number.isFinite(Number(n))?`${(Number(n)/1e6).toFixed(4)} m²`:'—';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+export class EngineeringStudioPanel{
+  constructor(studio,viewer){
+    this.studio=studio;this.viewer=viewer;this.data=null;this.model=null;
+    this.install();
+  }
+  install(){
+    const s=this.studio;if(!s?.rail||!s?.root)return;
+    let button=s.rail.querySelector('[data-pane="engineering"]');
+    if(!button){button=document.createElement('button');button.type='button';button.dataset.pane='engineering';button.id='tool-engineering';button.title='الإنتاج والهندسة';button.setAttribute('aria-expanded','false');button.innerHTML=`${svgIcon}<span>الإنتاج</span>`;s.rail.append(button);}
+    let panel=s.root.querySelector('[data-panel="engineering"]');
+    if(!panel){panel=document.createElement('section');panel.className='pro-section ms-pane mahaba-engineering-pane';panel.dataset.panel='engineering';panel.hidden=true;panel.innerHTML='<div data-engineering-content></div>';s.root.append(panel);}
+    this.button=button;this.panel=panel;this.content=panel.querySelector('[data-engineering-content]');
+    const original=s.setPane.bind(s);
+    s.setPane=key=>{
+      if(key!=='engineering')return original(key);
+      s.root.hidden=false;const layout=s.root.closest('.ms-layout')||s.root.closest('main')||s.root.parentElement;layout?.classList.remove('inspector-closed');
+      for(const b of s.rail.querySelectorAll('[data-pane]')){const on=b.dataset.pane==='engineering';b.classList.toggle('active',on);b.setAttribute('aria-expanded',String(on));}
+      for(const p of s.root.querySelectorAll('[data-panel]'))p.hidden=p.dataset.panel!=='engineering';
+      const title=s.$?.('title');if(title)title.textContent='الإنتاج والهندسة';s.panel='engineering';window.dispatchEvent(new Event('resize'));
+    };
+    button.onclick=()=>s.setPane(s.panel==='engineering'?null:'engineering');
+    if(!document.getElementById('mahabaEngineeringPaneStyle')){const style=document.createElement('style');style.id='mahabaEngineeringPaneStyle';style.textContent=`
+      .mahaba-engineing-card,.mahaba-engineering-card{border:1px solid #294852;background:#0d202a;border-radius:11px;padding:10px;margin:9px 0}.mahaba-engineering-score{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}.mahaba-engineering-score strong{font-size:26px;line-height:1;color:#72d8cc}.mahaba-engineering-score span{font-size:9px;color:#87a2ad}.mahaba-engineering-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mahaba-engineering-metric{border:1px solid #28434d;border-radius:8px;padding:7px;background:#102731}.mahaba-engineering-metric small{display:block;color:#7998a4;font-size:8px;margin-bottom:3px}.mahaba-engineering-metric b{font-size:10px;color:#edf5f6}.mahaba-engineering-check{padding:7px 0;border-bottom:1px dashed #29434f;font-size:9px;line-height:1.45}.mahaba-engineering-check:last-child{border-bottom:0}.mahaba-engineering-check b{display:inline-block;min-width:76px}.mahaba-engineering-check.pass b{color:#67d5a1}.mahaba-engineering-check.review b{color:#e2bf68}.mahaba-engineering-check.fail b{color:#ff9292}.mahaba-engineering-kicker{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#6f909c}.mahaba-engineering-title{font-size:12px;font-weight:700;color:#edf5f6;margin:3px 0 8px}.mahaba-engineering-note{font-size:8.5px;line-height:1.7;color:#809ba5}.mahaba-engineering-rule{display:flex;justify-content:space-between;gap:8px;font-size:9px;padding:5px 0}.mahaba-engineering-rule span{color:#7f9aa4}.mahaba-engineering-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.mahaba-engineering-actions button{font-size:9px!important;padding:7px!important}
+    `;document.head.append(style);}
+  }
+  refresh(data){this.data=data;this.model=data?.engineeringModel||null;this.render();}
+  render(){
+    if(!this.content)return;const model=this.model;
+    if(!model){this.content.innerHTML='<div class="mahaba-engineering-card"><div class="mahaba-engineering-title">Engineering Core</div><div class="mahaba-engineering-note">هذا القالب لا يرسل GeneratedPackageModel إلى الاستوديو حتى الآن.</div></div>';return;}
+    const v=model.validation||{},m=model.metrics||{},c=model.compensation||{},b=model.nesting?.bounds||{},checks=v.checks||[],fails=checks.filter(x=>x.status==='FAIL').length,reviews=checks.filter(x=>x.status==='NEEDS_REVIEW').length,passes=checks.filter(x=>x.status==='PASS').length;
+    const ruleStatus=String(c.status||c.rule_status||'UNAPPROVED').toUpperCase(),ruleClass=ruleStatus==='APPROVED'?'pass':'review';
+    this.content.innerHTML=`
+      <div class="mahaba-engineering-card"><div class="mahaba-engineering-kicker">Mahabat Engineering Core</div><div class="mahaba-engineering-score"><div><div class="mahaba-engineering-title">Production Confidence</div><strong>${fmt(v.production_confidence,1)}%</strong></div><span>${passes} PASS · ${reviews} REVIEW · ${fails} FAIL</span></div></div>
+      <div class="mahaba-engineering-card"><div class="mahaba-engineering-title">Engineering Metrics</div><div class="mahaba-engineering-grid">
+        <div class="mahaba-engineering-metric"><small>Blank</small><b>${fmt(b.width,1)} × ${fmt(b.height,1)} mm</b></div>
+        <div class="mahaba-engineering-metric"><small>Blank area</small><b>${area(m.blank_area_mm2)}</b></div>
+        <div class="mahaba-engineering-metric"><small>Cut perimeter</small><b>${fmt(m.outer_perimeter_mm,1)} mm</b></div>
+        <div class="mahaba-engineering-metric"><small>Creases</small><b>${m.crease_count??'—'} · ${fmt(m.crease_length_mm,1)} mm</b></div>
+        <div class="mahaba-engineering-metric"><small>Glue area</small><b>${fmt(m.glue_area_mm2,0)} mm²</b></div>
+        <div class="mahaba-engineering-metric"><small>Panels / Folds</small><b>${model.panels?.length??0} / ${model.folds?.length??0}</b></div>
+      </div></div>
+      <div class="mahaba-engineering-card"><div class="mahaba-engineering-title">Material & Compensation</div><div class="mahaba-engineering-rule"><span>Material</span><b>${esc(model.material?.material_id||model.material?.material_family)}</b></div><div class="mahaba-engineering-rule"><span>Thickness</span><b>${fmt(model.material?.thickness_mm,3)} mm</b></div><div class="mahaba-engineering-rule"><span>Rule set</span><b>${esc(c.rule_set||'—')} · ${esc(c.rule_set_version||'—')}</b></div><div class="mahaba-engineering-check ${ruleClass}"><b>${ruleStatus}</b> Compensation calibration</div></div>
+      <div class="mahaba-engineering-card"><div class="mahaba-engineering-title">Production Validation</div>${checks.map(x=>`<div class="mahaba-engineering-check ${x.status==='PASS'?'pass':x.status==='FAIL'?'fail':'review'}"><b>${esc(x.status)}</b>${esc(x.id)}<br><span class="mahaba-engineering-note">${esc(x.message)}</span></div>`).join('')||'<div class="mahaba-engineering-note">لا توجد فحوصات.</div>'}</div>
+      <div class="mahaba-engineering-card"><div class="mahaba-engineering-title">Production Readiness</div><div class="mahaba-engineering-rule"><span>Nesting polygon</span><b>${model.nesting?.outer_polygon?.length>=3?'READY':'MISSING'}</b></div><div class="mahaba-engineering-rule"><span>Cost variables</span><b>${Number.isFinite(m.blank_area_mm2)&&Number.isFinite(m.crease_length_mm)?'READY':'INCOMPLETE'}</b></div><div class="mahaba-engineering-rule"><span>Machine profile</span><b>${checks.some(x=>x.id==='machine.profile')?'NOT SELECTED':'AVAILABLE'}</b></div><div class="mahaba-engineering-note">الهندسة والمراجعة داخل Mahabat Studio نفسه. أي NEEDS REVIEW لا يتحول إلى PASS إلا بعد مرجع أو معايرة فعلية.</div><div class="mahaba-engineering-actions"><button type="button" data-eng-export>Engineering JSON</button><button type="button" data-eng-close>إغلاق</button></div></div>`;
+    this.content.querySelector('[data-eng-export]')?.addEventListener('click',()=>this.exportModel());
+    this.content.querySelector('[data-eng-close]')?.addEventListener('click',()=>this.studio.setPane(null));
+  }
+  exportModel(){if(!this.model)return;const blob=new Blob([JSON.stringify(this.model,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${this.model.template?.template_id||'Mahabat'}-Engineering.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+}
