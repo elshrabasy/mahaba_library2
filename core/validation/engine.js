@@ -47,6 +47,9 @@ export function validateProduction(model,{machine=null}={}){
   const spacing=Number(model.nesting?.minimum_spacing_mm);
   checks.push(check('nesting.spacing','nesting',Number.isFinite(spacing)&&spacing>=0?'PASS':'NEEDS_REVIEW',Number.isFinite(spacing)&&spacing>=0?'Minimum spacing defined':'Minimum nesting spacing needs review'));
   checks.push(check('nesting.grain','nesting',grainRule?'PASS':'NEEDS_REVIEW',grainRule?'Grain restriction available':'Nesting grain restriction missing'));
+  const pieces=Number(model.metrics?.pieces_per_sheet),waste=Number(model.metrics?.waste_percent),util=Number(model.metrics?.utilization);
+  checks.push(check('nesting.actual_result','nesting',Number.isFinite(pieces)&&pieces>0?'PASS':'NEEDS_REVIEW',Number.isFinite(pieces)&&pieces>0?'Actual nesting result linked to model metrics':'Actual nesting result has not been linked yet'));
+  checks.push(check('nesting.utilization','nesting',Number.isFinite(waste)&&waste>=0&&Number.isFinite(util)&&util>0?'PASS':'NEEDS_REVIEW',Number.isFinite(waste)&&waste>=0&&Number.isFinite(util)&&util>0?'Nesting waste/utilization available':'Nesting waste/utilization needs review'));
 
   const bleed=model.parameters?.bleed??model.parameters?.resolved?.bleed??null;
   checks.push(check('printing.bleed','printing',bleed==null?'NEEDS_REVIEW':Number(bleed)>=0?'PASS':'FAIL',bleed==null?'Bleed not yet specified':'Bleed parameter valid'));
@@ -58,11 +61,15 @@ export function validateProduction(model,{machine=null}={}){
   const metrics=model.metrics||{};
   const metricsReady=['blank_area_mm2','outer_perimeter_mm','crease_length_mm'].every(k=>Number.isFinite(metrics[k]));
   checks.push(check('cost.metrics','cost',metricsReady?'PASS':'FAIL',metricsReady?'Cost-driving geometry metrics available':'Cost metrics incomplete'));
+  const estimate=model.production?.cost_estimate;
+  checks.push(check('cost.estimate','cost',Number.isFinite(Number(estimate?.cost_per_piece))&&Number(estimate?.cost_per_piece)>0?'PASS':'NEEDS_REVIEW',Number.isFinite(Number(estimate?.cost_per_piece))&&Number(estimate?.cost_per_piece)>0?'Cost engine estimate available':'Cost engine estimate needs nesting/profile inputs'));
 
   if(machine){
+    const evaluation=model.production?.machine_evaluation;
     const b=model.nesting?.bounds||null,maxW=machine.max_sheet_width??machine.sheet?.max_width_mm,maxH=machine.max_sheet_height??machine.sheet?.max_height_mm;
     const fit=!b||!Number.isFinite(maxW)||!Number.isFinite(maxH)?null:((b.width<=maxW&&b.height<=maxH)||(rotations.includes(90)&&b.height<=maxW&&b.width<=maxH));
     checks.push(check('machine.fit','machine',fit==null?'NEEDS_REVIEW':fit?'PASS':'FAIL',fit==null?'Machine dimensions not fully available':fit?'Blank fits machine':'Blank does not fit machine'));
+    checks.push(check('machine.profile_match','machine',evaluation?.compatible?'PASS':evaluation?'FAIL':'NEEDS_REVIEW',evaluation?.compatible?'MachineEngine matched selected profile':'MachineEngine rejected or has not evaluated selected profile',{reasons:evaluation?.reasons||[]}));
   }else checks.push(check('machine.profile','machine','NEEDS_REVIEW','No machine profile selected'));
 
   const groupScores={};

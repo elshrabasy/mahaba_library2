@@ -1,5 +1,6 @@
 // Compatibility adapter for the migration period.
 // Engineering Core V1 must not depend on Three.js or Studio internals.
+import {calculateMetrics} from '../metrics/engine.js';
 
 const clone=v=>typeof structuredClone==='function'?structuredClone(v):JSON.parse(JSON.stringify(v));
 
@@ -57,11 +58,12 @@ export function legacyGeometryToV1(source){
     panels:(source.panels||[]).map(panel=>({panel_id:panel.id,name:panel.name||panel.role||panel.id,role:panel.role||null,polygon:(panel.poly||[]).map(p=>[+p[0],+p[1]]),coordinate_system:{origin:[0,0],x_axis:[1,0],y_axis:[0,1]},dimensions:bbox(panel.poly||[]),artwork_area:(panel.poly||[]).map(p=>[+p[0],+p[1]]),parent_panel:panel.parent||null})),
     folds:[...foldByPanel.values()],
     assembly:{glue_relations:[],lock_tabs:[],slot_tab_relations:[],assembly_order:(source.animations?.phases||[]).map(p=>p.Name).filter(Boolean),multi_part_relations:[],legacy_stages:clone(source.stages||{}),legacy_animations:clone(source.animations||{})},
-    nesting:{outer_polygon:outline,keep_out_zones:[],allowed_rotations_deg:[0,180],grain_restriction:source.fluteDirection?.key||source.fluteDirection||'VARIABLE',minimum_spacing_mm:0,edge_constraints:{left:0,right:0,top:0,bottom:0},gripper_constraint_mm:0},
+    nesting:{outer_polygon:outline,keep_out_zones:[],allowed_rotations_deg:[0,180],grain_restriction:source.fluteDirection?.key||source.fluteDirection||'VARIABLE',minimum_spacing_mm:0,edge_constraints:{left:0,right:0,top:0,bottom:0},gripper_constraint_mm:0,bounds},
     production:{compatible_processes:[],die_cutting_methods:[],gluing_method:null,required_operations:[],machine_constraints:{}},
     metrics:{blank_area_mm2:null,outer_perimeter_mm:null,crease_length_mm:null,crease_count:creases.length,glue_length_mm:null,glue_area_mm2:null,print_area_mm2:null,foil_area_mm2:0,uv_area_mm2:0,emboss_area_mm2:0,pieces_per_sheet:null,waste_percent:null},
     validation:{production_confidence:null,status:source.validation?.status||'UNVALIDATED',checks:[]}
   };
+  model.metrics=calculateMetrics(model);
   model.parameters.__legacy_meta={code:source.code,name:source.name||source.code,version:source.version||'legacy',width:source.width||bounds.width,height:source.height||bounds.height,dimensionType:clone(source.dimensionType||null),fluteDirection:clone(source.fluteDirection||null),validation:clone(source.validation||{}),stages:clone(source.stages||{}),animations:clone(source.animations||{})};
   return model;
 }

@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative,listMahabatTemplates} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261013-5';
-import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261013-2';
-import {StudioProductionLink} from '../studio-src/production-link.js?v=20261013-1';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261013-6';
+import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261013-6';
+import {StudioProductionLink} from '../studio-src/production-link.js?v=20261013-6';
 
-globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261013-2'};
+globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261013-6'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
 const host=document.getElementById('canvas3d'),slider=document.getElementById('fold'),status=document.getElementById('modelStatus'),templateSwitch=document.getElementById('templateSwitch'),projectLabel=document.getElementById('projectLabel'),coreBadge=document.getElementById('coreBadge');
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor('#09151f',1);host.append(renderer.domElement);
