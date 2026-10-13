@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://mahabatalfan.local/schemas/ValidationResult.schema.json",
+  "title":"Mahabat ValidationResult",
+  "type":"object",
+  "required":["status","production_confidence","checks"],
+  "properties":{
+    "status":{"enum":["PASS","FAIL","NEEDS_REVIEW","UNVALIDATED"]},
+    "production_confidence":{"type":["number","null"],"minimum":0,"maximum":100},
+    "checks":{"type":"array","items":{"type":"object","required":["id","group","status","severity","message"],"properties":{"id":{"type":"string"},"group":{"type":"string"},"status":{"enum":["PASS","FAIL","NEEDS_REVIEW"]},"severity":{"enum":["INFO","WARNING","ERROR","CRITICAL"]},"message":{"type":"string"},"expected":{},"actual":{},"error_mm":{"type":["number","null"]},"tolerance_mm":{"type":["number","null"]}},"additionalProperties":true}}
+  },
+  "additionalProperties":true
+}
