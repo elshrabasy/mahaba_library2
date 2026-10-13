@@ -1,4 +1,4 @@
-import {generateEVC11001 as generateBase} from './EVC11001.js';
+import {generateEVC11001Core as generateBase} from './EVC11001-core.js';
 
 const EPS=1e-7;
 const same=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1])<EPS;
