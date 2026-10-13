@@ -1,0 +1,18 @@
+import {bbox,area} from '../../core/geometry/kernel.js';
+
+const clone=p=>[Number(p[0]),Number(p[1])];
+export function modelToNestTemplate(model){
+  const polygon=(model?.nesting?.outer_polygon||[]).map(clone);if(polygon.length<3)throw new Error('GeneratedPackageModel has no valid nesting outer polygon.');
+  const b=bbox(polygon);
+  return {code:model.template?.template_id||model.model_id,polygon,cuts:(model.geometry?.cut_paths||[]).map(x=>[clone(x.a),clone(x.b)]),creases:(model.geometry?.crease_paths||[]).map(x=>[clone(x.a),clone(x.b)]),width:b.width,height:b.height,source:'generated-package-model-v1'};
+}
+export function nestConfig(model,{sheetWidth=1000,sheetHeight=690,gripper=10,marginTop=5,marginRight=5,marginBottom=5,marginLeft=5,gap=null,bleed=0,angles=null}={}){
+  const top=Math.max(Number(gripper),Number(marginTop)),W=Number(sheetWidth)-Number(marginLeft)-Number(marginRight),H=Number(sheetHeight)-top-Number(marginBottom);if(!(W>0&&H>0))throw new Error('Invalid effective sheet area.');
+  const allowed=model.nesting?.allowed_rotations_deg||[0,180],useAngles=(angles||allowed).filter(a=>allowed.includes(a));if(!useAngles.length)throw new Error('No allowed nesting rotation remains after constraints.');
+  const spacing=gap==null?Number(model.nesting?.minimum_spacing_mm||0):Number(gap),clearance=Math.max(0,spacing)+2*Math.max(0,Number(bleed));
+  return {W,H,clearance,angles:useAngles,offsetX:Number(marginLeft),offsetY:top,sheetWidth:Number(sheetWidth),sheetHeight:Number(sheetHeight),gripper:Number(gripper),bleed:Number(bleed)};
+}
+function summarize(solution,result,config,index){const pieces=solution.layout?.length||0,sheetArea=config.sheetWidth*config.sheetHeight,blankArea=Number(result.area||0),util=sheetArea>0?pieces*blankArea/sheetArea:0;return {option_id:`NEST-${String(index+1).padStart(2,'0')}`,name:solution.name||`Option ${index+1}`,pieces_per_sheet:pieces,utilization:util,waste_percent:Math.max(0,100-util*100),layout:solution.layout||[],used_width_mm:Number(solution.w||0),used_height_mm:Number(solution.h||0),sheet:{width_mm:config.sheetWidth,height_mm:config.sheetHeight,gripper_mm:config.gripper},angles:[...config.angles]};}
+export function solveRegularCandidates(solver,model,settings={},limit=5){if(!solver?.regularSolution)throw new Error('Nesting solver with regularSolution() is required.');const template=modelToNestTemplate(model),config=nestConfig(model,settings),result=solver.regularSolution(template,config),solutions=(result.results||[]).map((x,i)=>summarize(x,result,config,i)).filter(x=>x.pieces_per_sheet>0).sort((a,b)=>b.pieces_per_sheet-a.pieces_per_sheet||a.waste_percent-b.waste_percent).slice(0,limit);return {phase:'PHASE_1_2',template,config,solutions,recommended:solutions[0]||null,blank_area_mm2:area(template.polygon)};}
+export function compareSheetCandidates(solver,model,candidates=[],baseSettings={}){const all=[];for(const sheet of candidates){const solved=solveRegularCandidates(solver,model,{...baseSettings,...sheet},3);for(const s of solved.solutions)all.push({...s,candidate_id:sheet.id||`${sheet.sheetWidth}x${sheet.sheetHeight}`});}all.sort((a,b)=>b.pieces_per_sheet-a.pieces_per_sheet||a.waste_percent-b.waste_percent);return {solutions:all,recommended:all[0]||null};}
+export const NestingOrchestrator={modelToNestTemplate,config:nestConfig,solveRegular:solveRegularCandidates,compareSheets:compareSheetCandidates};
