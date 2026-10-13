@@ -1,8 +1,7 @@
-import * as THREE from 'three';
 import {SharedStudio} from './shared-studio.js';
 
-// The UI/artwork/foil/UV/nesting implementation remains the original Mahaba Library studio.
-// This subclass only swaps the engineering data source from EngView/API to Mahabat Engine.
+// Keep the original Mahaba Library studio behaviour intact.
+// This subclass only swaps geometry/dimensions/nesting data to Mahabat Engine.
 export class MahabatSharedStudio extends SharedStudio {
   constructor(viewer){
     super(viewer);
@@ -65,26 +64,8 @@ export class MahabatSharedStudio extends SharedStudio {
     finally{this.dimensionsBusy=false;button.disabled=original.disabled=false;button.textContent='تطبيق الأبعاد';}
   }
 
-  async bake(s,d){
-    const images=await Promise.all(['image','foil','uv'].map(k=>this.image(s[k]))),base=images[0]||images[1]||images[2],result={};
-    const ratio=d.objRectWidth/d.objRectHeight,w=Math.round(ratio>=1?1536:1536*ratio),h=Math.round(ratio>=1?1536/ratio:1536),canvases=[];
-    const drawPlaced=(ctx,im,baseImage)=>{if(!im||!baseImage)return;const px=w/d.objRectWidth,k=Math.min(d.objRectWidth/baseImage.width,d.objRectHeight/baseImage.height)*px*s.scale/100;ctx.save();ctx.translate(w/2+s.x*px,h/2+s.y*px);ctx.rotate(s.angle*Math.PI/180);ctx.scale(k,k);ctx.drawImage(im,-baseImage.width/2,-baseImage.height/2,baseImage.width,baseImage.height);ctx.restore();};
-    for(let i=0;i<3;i++){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle=i===0?'#fff':'#000';ctx.fillRect(0,0,w,h);drawPlaced(ctx,images[i],base);canvases.push(c);}
-    if(images[1]){const foil=document.createElement('canvas');foil.width=w;foil.height=h;const fx=foil.getContext('2d');fx.fillStyle=s.foilColor||'#d7ad55';fx.fillRect(0,0,w,h);fx.globalCompositeOperation='destination-in';fx.drawImage(canvases[1],0,0);canvases[0].getContext('2d').drawImage(foil,0,0);}
-    for(let i=0;i<3;i++){const t=new THREE.CanvasTexture(canvases[i]);t.channel=3;t.colorSpace=i===0?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[['map','foil','uv'][i]]=t;if(i===0)result.canvas=canvases[i];}
-    return result;
-  }
-
-  async applyAll(){
-    await super.applyAll();
-    for(const x of this.surfaces){
-      const key=`${x.drawing}:${x.side}`,s=this.layers.get(key),b=this.baked.get(key),m=x.mat,o=x.original;
-      if(!s||!b){m.clearcoatMap=null;m.metalnessMap=o.metalnessMap||null;m.needsUpdate=true;continue;}
-      if(s.uv){m.clearcoat=1;m.clearcoatRoughness=.06;m.clearcoatMap=b.uv;}else{m.clearcoat=.1;m.clearcoatRoughness=.3;m.clearcoatMap=null;}
-      if(s.foil){m.metalness=1;m.metalnessMap=b.foil;m.roughness=Math.min(m.roughness,.24);}else{m.metalness=o.metalness;m.metalnessMap=o.metalnessMap;}
-      m.needsUpdate=true;
-    }
-  }
+  async bake(s,d){return super.bake(s,d);}
+  async applyAll(){return super.applyAll();}
 
   styleNestingFrame(){
     const frame=this.$('nesting'),doc=frame?.contentDocument;if(!doc||doc.getElementById('mahabatNestTheme'))return;
