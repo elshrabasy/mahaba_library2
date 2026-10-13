@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/evc11001-pilot.mjs && node tests/core-contract-v1.mjs && node tests/nesting-bridge.mjs && node tests/nest-engine-regular.mjs && node tests/studio-integration-contract.mjs"
+    "test": "node tests/evc11001-pilot.mjs && node tests/core-contract-v1.mjs && node tests/benchmark-framework-v1.mjs && node tests/nesting-bridge.mjs && node tests/nest-engine-regular.mjs && node tests/studio-integration-contract.mjs"
   }
 }
