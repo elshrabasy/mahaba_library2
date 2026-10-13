@@ -49,14 +49,15 @@ export function requireMaterial(id){const m=getMaterial(id);if(!m)throw new Erro
 
 // Temporary compatibility shape for legacy parametric templates.
 export function toLegacyMaterial(material){
-  return {
+  const out={
     key:material.key,
     family:material.family,
     name:material.name,
     thickness:material.engineering.thickness_mm,
-    grammage:material.engineering.gsm,
     types:[...material.legacyTypes]
   };
+  if(material.engineering.gsm!=null)out.grammage=material.engineering.gsm;
+  return out;
 }
 
 export const MaterialRegistry={version:MATERIAL_REGISTRY_VERSION,get:getMaterial,require:requireMaterial,list:listMaterials,toLegacy:toLegacyMaterial};
