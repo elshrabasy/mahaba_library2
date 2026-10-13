@@ -46,7 +46,7 @@ assert.ok(native.materials.outside.values.sheetTexMatrix_Uni[0]>0);
 assert.ok(native.materials.inside.values.sheetTexMatrix_Uni[0]<0);
 for(const geometry of Object.values(native.geometries)){
   assert.ok(geometry.index.length>0);
-  assert.equal(geometry.groups.length,3);
+  assert.deepEqual(geometry.groups.map(g=>g.symbol),['OUT','IN','EDGE','FLUTE']);
   assert.equal(geometry.attributes.POSITION.array.length,geometry.attributes.NORMAL.array.length);
 }
 
