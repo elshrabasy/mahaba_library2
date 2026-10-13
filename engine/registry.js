@@ -29,9 +29,23 @@ export function generateMahabat(code,input={},options={}){
     legacy.fluteDirection={key:model.parameters.grain_direction==='X'?'FD_X':'FD_Y',ar:'grain'};
     return legacy;
   }
-  return entry.generate(input,options);
+  const legacy=entry.generate(input,options);
+  legacy.engineeringModel=legacyGeometryToV1(legacy);
+  return legacy;
 }
-export function generateMahabatNative(code,input={},options={}){return buildMahabatNative(generateMahabat(code,input,options));}
+export function generateMahabatNative(code,input={},options={}){
+  const legacy=generateMahabat(code,input,options),native=buildMahabatNative(legacy);
+  native.engineeringModel=legacy.engineeringModel||generateMahabatModel(code,input,options);
+  native.engineering={
+    schema:native.engineeringModel?.schema_version||null,
+    model_id:native.engineeringModel?.model_id||null,
+    template_id:native.engineeringModel?.template?.template_id||null,
+    validation:native.engineeringModel?.validation||null,
+    metrics:native.engineeringModel?.metrics||null,
+    compensation:native.engineeringModel?.compensation||null
+  };
+  return native;
+}
 
 export const MahabatEngine={generate:generateMahabat,generateModel:generateMahabatModel,generateNative:generateMahabatNative,has:hasMahabatTemplate,list:listMahabatTemplates};
 if(typeof globalThis!=='undefined')globalThis.MahabatEngine=MahabatEngine;
