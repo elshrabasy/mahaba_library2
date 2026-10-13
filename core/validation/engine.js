@@ -46,7 +46,7 @@ export function validateProduction(model,{machine=null}={}){
   const groupScores={};
   for(const [group,weight] of Object.entries(WEIGHTS)){
     const gs=checks.filter(c=>c.group===group);if(!gs.length){groupScores[group]=0;continue;}
-    const ratio=gs.reduce((s,c)=>s+(c.status==='PASS'?1:c.status==='NEEDS_REVIEW'?.5:0),0)/gs.length;
+    const ratio=gs.reduce((s,c)=>s+(c.status==='PASS'?1:(c.status==='NEEDS_REVIEW'?.5:0)),0)/gs.length;
     groupScores[group]=ratio*weight;
   }
   let confidence=Object.values(groupScores).reduce((a,b)=>a+b,0);
