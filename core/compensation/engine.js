@@ -6,6 +6,8 @@ function evalFormula(formula,thickness){
   switch(formula.op){
     case 'constant':return formula.value;
     case 'mul_thickness':return thickness*formula.factor;
+    case 'div_thickness':return thickness/formula.divisor;
+    case 'neg_div_thickness':return -thickness/formula.divisor;
     case 'thickness_plus':return thickness+formula.value;
     default:throw new Error(`Unsupported compensation formula: ${formula.op}`);
   }
