@@ -1,0 +1,39 @@
+import {area,perimeter,pathLength} from '../geometry/kernel.js';
+
+function sumArea(items=[]){return items.reduce((s,x)=>s+area(x.polygon||x.points||[]),0);}
+function sumLength(items=[]){return items.reduce((s,x)=>s+pathLength(x),0);}
+
+export function calculateMetrics(model){
+  const outline=model?.nesting?.outer_polygon||[];
+  const geometry=model?.geometry||{};
+  const finishes=model?.finishes||{};
+  const blankArea=area(outline),outerPerimeter=perimeter(outline);
+  const creaseLength=sumLength(geometry.crease_paths||[]);
+  const glueArea=sumArea(geometry.glue_areas||[]);
+  const glueLength=(geometry.glue_areas||[]).reduce((s,x)=>s+perimeter(x.polygon||[]),0);
+  const safePrintable=(model.panels||[]).reduce((s,p)=>s+area(p.artwork_area||p.polygon||[]),0);
+  const foilArea=sumArea(finishes.foil_areas||[]),uvArea=sumArea(finishes.uv_areas||[]),embossArea=sumArea(finishes.emboss_areas||[]),debossArea=sumArea(finishes.deboss_areas||[]);
+  const metrics={
+    blank_area_mm2:blankArea,
+    blank_area_m2:blankArea/1e6,
+    outer_perimeter_mm:outerPerimeter,
+    cut_length_mm:sumLength(geometry.cut_paths||[]),
+    crease_length_mm:creaseLength,
+    crease_count:(geometry.crease_paths||[]).length,
+    perforation_length_mm:sumLength(geometry.perforation_paths||[]),
+    score_length_mm:sumLength(geometry.score_paths||[]),
+    glue_length_mm:glueLength,
+    glue_area_mm2:glueArea,
+    print_area_mm2:safePrintable,
+    foil_area_mm2:foilArea,
+    uv_area_mm2:uvArea,
+    emboss_area_mm2:embossArea,
+    deboss_area_mm2:debossArea,
+    pieces_per_sheet:model.metrics?.pieces_per_sheet??null,
+    waste_percent:model.metrics?.waste_percent??null
+  };
+  return metrics;
+}
+
+export function attachMetrics(model){return {...model,metrics:calculateMetrics(model)};}
+export const MetricsEngine={calculate:calculateMetrics,attach:attachMetrics};
