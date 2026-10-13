@@ -1,0 +1,19 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://mahabatalfan.local/schemas/Machine.schema.json",
+  "title":"Mahabat MachineProfile",
+  "type":"object",
+  "required":["machine_id","machine_type","sheet","gripper_mm","side_margin_mm","allowed_rotations","performance","cost"],
+  "properties":{
+    "machine_id":{"type":"string"},
+    "name":{"type":"string"},
+    "machine_type":{"type":"string"},
+    "sheet":{"type":"object","required":["max_width_mm","max_height_mm"],"additionalProperties":true},
+    "gripper_mm":{"type":"number","minimum":0},
+    "side_margin_mm":{"type":"number","minimum":0},
+    "allowed_rotations":{"type":"array","items":{"type":"number"}},
+    "performance":{"type":"object","additionalProperties":true},
+    "cost":{"type":"object","additionalProperties":true}
+  },
+  "additionalProperties":true
+}
