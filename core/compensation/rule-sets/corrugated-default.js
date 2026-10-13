@@ -25,11 +25,11 @@ export const CORRUGATED_DEFAULT_RULE_SET={
     handleCorrection:{op:'mul_thickness',factor:1},
     outsideFold90:{op:'mul_thickness',factor:.5},
     doubleCrease:{op:'mul_thickness',factor:2},
-    lidFrontCorrection:{op:'mul_thickness',factor:1/3},
+    lidFrontCorrection:{op:'div_thickness',divisor:3},
     layerStep:{op:'mul_thickness',factor:1},
     insideLayer:{op:'mul_thickness',factor:1},
     rimFold90:{op:'mul_thickness',factor:1.5},
-    rimHeightCorrection:{op:'mul_thickness',factor:-1/3},
+    rimHeightCorrection:{op:'neg_div_thickness',divisor:3},
     rimCreaseGap:{op:'mul_thickness',factor:1},
     fittingCreaseGap:{op:'mul_thickness',factor:1}
   },
