@@ -12,7 +12,7 @@ function sampleArc(line){
   while(d>Math.PI)d-=Math.PI*2;
   while(d<-Math.PI)d+=Math.PI*2;
   const n=Math.max(3,Math.ceil(Math.abs(d)/(Math.PI/36))),out=[line.a];
-  for(let i=1;i<n;i++){const a=a0+d*i/n;out.push([c[0]+r*Math.cos(a),c[1]+r*Math.sin(a)];}
+  for(let i=1;i<n;i++){const a=a0+d*i/n;out.push([c[0]+r*Math.cos(a),c[1]+r*Math.sin(a)]);}
   out.push(line.b);return out;
 }
 
