@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mahabatalfan.local/schemas/GeneratedPackageModel.schema.json",
+  "title": "Mahabat GeneratedPackageModel",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","model_id","template","parameters","material","compensation","geometry","panels","folds","assembly","nesting","production","metrics","validation"],
+  "properties": {
+    "schema_version": {"const":"1.0.0"},
+    "model_id": {"type":"string","minLength":1},
+    "template": {
+      "type":"object",
+      "additionalProperties": true,
+      "required":["template_id","name","category","version"],
+      "properties": {
+        "template_id":{"type":"string"},
+        "name":{"type":"string"},
+        "category":{"type":"string"},
+        "family":{"type":["string","null"]},
+        "standard_code":{"type":["string","null"]},
+        "version":{"type":"string"}
+      }
+    },
+    "parameters":{"type":"object","additionalProperties":true},
+    "material":{"type":"object","additionalProperties":true,"required":["material_family","thickness_mm"]},
+    "compensation":{"type":"object","additionalProperties":true,"required":["rule_set","rule_set_version","rules_applied"]},
+    "geometry": {
+      "type":"object",
+      "additionalProperties": false,
+      "required":["units","cut_paths","crease_paths","perforation_paths","score_paths","glue_areas","safe_zones","bleed_zones"],
+      "properties": {
+        "units":{"const":"mm"},
+        "cut_paths":{"type":"array"},
+        "crease_paths":{"type":"array"},
+        "perforation_paths":{"type":"array"},
+        "score_paths":{"type":"array"},
+        "glue_areas":{"type":"array"},
+        "safe_zones":{"type":"array"},
+        "bleed_zones":{"type":"array"}
+      }
+    },
+    "panels":{"type":"array","items":{"type":"object","required":["panel_id","name","polygon","coordinate_system","artwork_area","parent_panel"],"additionalProperties":true}},
+    "folds":{"type":"array","items":{"type":"object","required":["fold_id","crease_id","parent_panel","child_panel","fold_axis","fold_direction","target_angle_deg","fold_order"],"additionalProperties":true}},
+    "assembly":{"type":"object","additionalProperties":true},
+    "nesting":{"type":"object","additionalProperties":true,"required":["outer_polygon","allowed_rotations_deg","minimum_spacing_mm"]},
+    "production":{"type":"object","additionalProperties":true},
+    "metrics":{"type":"object","additionalProperties":true},
+    "validation":{"type":"object","additionalProperties":true,"required":["status","checks"]}
+  }
+}
