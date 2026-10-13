@@ -1,7 +1,7 @@
 // Compatibility adapter for the migration period.
 // Engineering Core V1 must not depend on Three.js or Studio internals.
 
-const clone=v=>structuredClone?v=>structuredClone(v):v=>JSON.parse(JSON.stringify(v));
+const clone=v=>typeof structuredClone==='function'?structuredClone(v):JSON.parse(JSON.stringify(v));
 
 function bbox(poly=[]){
   if(!poly.length)return {minX:0,minY:0,maxX:0,maxY:0,width:0,height:0};
