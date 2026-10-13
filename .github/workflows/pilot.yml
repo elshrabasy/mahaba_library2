@@ -20,6 +20,7 @@ jobs:
           node --check pilot/studio-v2.js
           node --check pilot/core-v1.js
           node --check studio-src/mahabat-shared-studio.js
+          node --check studio-src/engineering-panel.js
           node --check studio-src/shared-studio.js
           node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js
