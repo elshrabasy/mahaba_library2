@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const html=fs.readFileSync(new URL('../studio-src/nesting.html',import.meta.url),'utf8');
+assert.match(html,/new Worker\('\.\/nest-worker-module\.js'/,'nesting must run heavy search in a worker');
+assert.match(html,/MAHABAT · PRODUCTION/,'nesting must carry Mahabat identity');
+assert.match(html,/--teal:#2cc8bb/,'nesting must use Mahabat teal theme');
+assert.match(html,/mahabat:nesting-result/,'nesting must publish production metrics');
+assert.match(html,/تحميل أفضل التعشيقات/,'mobile CTA should be explicit');
+assert.doesNotMatch(html,/background:#edf2f5/,'legacy light theme must not return');
+console.log('nesting page contract: PASS');
