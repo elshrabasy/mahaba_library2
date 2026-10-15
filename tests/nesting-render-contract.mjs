@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const src=fs.readFileSync(new URL('../studio-src/nesting.html',import.meta.url),'utf8');
+assert.match(src,/v\.cuts\|\|\[\]/,'nesting renderer must draw all cut segments');
+assert.match(src,/v\.creases\|\|\[\]/,'nesting renderer must draw crease segments');
+assert.match(src,/--cut:#f0706a/);
+assert.match(src,/--crease:#39c985/);
+assert.match(src,/new Worker\('\.\/nest-worker-module\.js'/);
+assert.match(src,/mahaba:preferences/);
+assert.match(src,/data-i18n="nestTitle"/);
+console.log('nesting render contract: ok');
