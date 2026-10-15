@@ -23,6 +23,7 @@ jobs:
           node --check studio-src/engineering-panel.js
           node --check studio-src/production-link.js
           node --check studio-src/generator-experience.js
+          node --check studio-src/studio-preferences.js
           node --check studio-src/shared-studio.js
           node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js
