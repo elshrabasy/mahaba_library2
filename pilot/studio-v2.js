@@ -5,7 +5,7 @@ import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '.
 import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261015-1';
 import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261015-1';
 import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-1';
-import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-1';
+import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-2';
 
 globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261013-6'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
