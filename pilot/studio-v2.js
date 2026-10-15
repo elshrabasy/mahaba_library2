@@ -3,12 +3,13 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative,listMahabatTemplates} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261015-1';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=20261016-1';
 import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261015-1';
 import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-1';
 import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-2';
+import {installStudioUIPatch} from '../studio-src/studio-ui-patch.js?v=20261016-1';
 
-globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261016-1'};
+globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261016-3'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
 const host=document.getElementById('canvas3d'),slider=document.getElementById('fold'),status=document.getElementById('modelStatus'),templateSwitch=document.getElementById('templateSwitch'),projectLabel=document.getElementById('projectLabel'),coreBadge=document.getElementById('coreBadge');
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor('#09151f',1);host.append(renderer.domElement);
@@ -17,15 +18,9 @@ const camera=new THREE.PerspectiveCamera(32,1,.0001,1000);camera.position.set(.7
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;
 const hemi=new THREE.HemisphereLight(0xffffff,0xb8c3ca,1.15),ambient=new THREE.AmbientLight(0xffffff,.22),key=new THREE.DirectionalLight(0xffffff,2.6),fill=new THREE.DirectionalLight(0xffffff,1.15);scene.add(hemi,ambient,key,fill);key.position.set(1.5,2,2.5);fill.position.set(-2,.7,1.2);key.castShadow=true;
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:0x10232c,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;floor.visible=false;scene.add(floor);
-
-const PRESETS={
- EVC11001:{label:'EVC11001 · Regular Tuck Lock / Snap Lock',params:{L:125,W:105,H:88,DT:1,MAT:1,FD:2},badge:'Mahabat Engine · Corrugated',project:'EVC11001 · Production Studio'},
- STE:{label:'Straight Tuck End · Reference V1',params:{L:215,W:80,H:45,glue_flap:15,bleed:3,safe_margin:4,dimension_mode:'ID',material_id:'FBB-350-055',grain_direction:'Y'},badge:'Engineering Core V1',project:'Straight Tuck End · Reference Template'}
-};
+const PRESETS={EVC11001:{label:'EVC11001 · Regular Tuck Lock / Snap Lock',params:{L:125,W:105,H:88,DT:1,MAT:1,FD:2},badge:'Mahabat Engine · Corrugated',project:'EVC11001 · Production Studio'},STE:{label:'Straight Tuck End · Reference V1',params:{L:215,W:80,H:45,glue_flap:15,bleed:3,safe_margin:4,dimension_mode:'ID',material_id:'FBB-350-055',grain_direction:'Y'},badge:'Engineering Core V1',project:'Straight Tuck End · Reference Template'}};
 const normalizeCode=code=>code==='MAH-FEC-STE-001'?'STE':(PRESETS[code]?code:'EVC11001');
-const paramsByCode=new Map(Object.entries(PRESETS).map(([k,v])=>[k,{...v.params}]));
-let model=null,data=null,materials=[],textures=[],currentCode='EVC11001';
-
+const paramsByCode=new Map(Object.entries(PRESETS).map(([k,v])=>[k,{...v.params}]));let model=null,data=null,materials=[],textures=[],currentCode='EVC11001';
 function initialCode(){const q=new URLSearchParams(location.search).get('template');return normalizeCode(q||localStorage.getItem('mahaba:last-template')||'EVC11001');}
 function disposeRenderAssets(){if(model){scene.remove(model.root);disposeNativeModel(model);model=null;}materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());materials=[];textures=[];}
 const textureLoader=new THREE.TextureLoader();const textureCache=new Map();
@@ -34,11 +29,7 @@ async function buildMaterials(nativeData){const entries=[];for(const id of Objec
 function fit(){if(!model)return;const b=visibleBounds(model);if(b.isEmpty()){status.textContent='تعذر حساب حدود المجسم.';return;}const c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3()),r=Math.max(s.x,s.y,s.z,.08);controls.target.copy(c);camera.position.copy(c).add(new THREE.Vector3(1.15,.82,1.25).normalize().multiplyScalar(r*2.6));camera.near=Math.max(.0001,r/1000);camera.far=Math.max(20,r*50);camera.updateProjectionMatrix();controls.update();floor.position.y=b.min.y-.002;}
 function setHeader(code){const preset=PRESETS[normalizeCode(code)]||PRESETS.EVC11001;if(templateSwitch)templateSwitch.value=normalizeCode(code);if(projectLabel)projectLabel.textContent=preset.project;if(coreBadge)coreBadge.textContent=preset.badge;}
 function updateUrl(code){const u=new URL(location.href);u.searchParams.set('template',normalizeCode(code));history.replaceState(null,'',u);localStorage.setItem('mahaba:last-template',normalizeCode(code));}
-
 let engineeringPanel=null,productionLink=null,generatorExperience=null;
 const viewer={host,renderer,scene,camera,controls,floor,slider,status,catalog:listMahabatTemplates(),currentCode:'EVC11001',model:null,async load(code,_variant='',parameters=null){try{const resolved=normalizeCode(code);status.textContent='جارٍ بناء القالب داخل Mahabat Studio…';const base=paramsByCode.get(resolved)||{...(PRESETS[resolved]?.params||{})};const next=parameters?{...base,...parameters}:{...base};paramsByCode.set(resolved,next);currentCode=resolved;data=generateMahabatNative(resolved,next);disposeRenderAssets();textureCache.clear();const mats=await buildMaterials(data);materials=Object.values(mats);model=buildNativeModel(data,mats,{gpu:false});viewer.model=model;viewer.currentCode=resolved;scene.add(model.root);slider.value='0';setNativeTime(model,0);setHeader(resolved);updateUrl(resolved);fit();await studio.bind(data,model);productionLink?.sync();engineeringPanel?.refresh(data);generatorExperience?.refresh(data,model);const confidence=data.engineeringModel?.validation?.production_confidence??data.validation?.production_confidence;const confidenceText=Number.isFinite(confidence)?` · Confidence ${confidence}%`:'';status.textContent=`${data.code} · ${data.materialInfo.name} · ${model.meshes.length} panels · Mahabat Studio${confidenceText}`;return true;}catch(e){status.textContent='خطأ: '+(e.userMessage||e.message);console.error(e);return false;}},seek(v,refit=false){if(!model||!data)return;setNativeTime(model,data.duration*Math.max(0,Math.min(1,v)));slider.value=Math.round(v*1000);if(refit)fit();},placeLights(force=false){const mode=studio?.$('sceneMode')?.value||'free',preset=studio?.$('lightPreset')?.value||'soft',a=THREE.MathUtils.degToRad(+(studio?.$('lightAngle')?.value||0));floor.visible=mode==='studio';key.intensity=preset==='contrast'?4:preset==='even'?2.2:2.6;fill.intensity=preset==='contrast'?.7:preset==='even'?1.8:1.15;key.position.set(Math.cos(a)*2,2,Math.sin(a)*2+1.5);if(force)fit();}};
-const studio=new MahabatSharedStudio(viewer);viewer.studio=studio;engineeringPanel=new EngineeringStudioPanel(studio,viewer);productionLink=new StudioProductionLink(studio,engineeringPanel);generatorExperience=new GeneratorExperience(viewer,studio);
-slider.oninput=()=>viewer.seek(+slider.value/1000,false);slider.onchange=fit;document.getElementById('foldFlat').onclick=()=>viewer.seek(0,true);document.getElementById('foldClosed').onclick=()=>viewer.seek(1,true);document.getElementById('back').onclick=()=>location.href='../';
-if(templateSwitch)templateSwitch.onchange=async()=>{const code=normalizeCode(templateSwitch.value);await viewer.load(code,'',paramsByCode.get(code)||PRESETS[code].params);};
-function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(host);(function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)})();
-viewer.load(initialCode());
+const studio=new MahabatSharedStudio(viewer);viewer.studio=studio;installStudioUIPatch(studio);engineeringPanel=new EngineeringStudioPanel(studio,viewer);productionLink=new StudioProductionLink(studio,engineeringPanel);generatorExperience=new GeneratorExperience(viewer,studio);
+slider.oninput=()=>viewer.seek(+slider.value/1000,false);slider.onchange=fit;document.getElementById('foldFlat').onclick=()=>viewer.seek(0,true);document.getElementById('foldClosed').onclick=()=>viewer.seek(1,true);document.getElementById('back').onclick=()=>location.href='../';if(templateSwitch)templateSwitch.onchange=async()=>{const code=normalizeCode(templateSwitch.value);await viewer.load(code,'',paramsByCode.get(code)||PRESETS[code].params);};function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(host);(function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)})();viewer.load(initialCode());
