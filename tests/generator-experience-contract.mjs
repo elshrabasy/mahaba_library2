@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const src=fs.readFileSync(new URL('../studio-src/generator-experience.js',import.meta.url),'utf8');
+assert.match(src,/class GeneratorExperience/);
+assert.match(src,/applyCardDimensions/);
+assert.match(src,/validationChecks/);
+assert.match(src,/installDimensionGuides/);
+assert.match(src,/selectedPanelId/);
+assert.match(src,/this\.s\.applyDimensions\(false\)/,'3D edits must regenerate through Mahabat Engine parameters');
+assert.doesNotMatch(src,/\.lines\s*=/,'Generator UX must not rewrite dieline lines');
+assert.doesNotMatch(src,/\.outline\s*=/,'Generator UX must not rewrite outline');
+assert.doesNotMatch(src,/\.poly\s*=/,'Generator UX must not rewrite panel polygon geometry');
+console.log('generator-experience-contract: PASS');
