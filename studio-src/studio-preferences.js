@@ -1,0 +1,54 @@
+const LANG_KEY='mahaba:lang';
+const THEME_KEY='mahaba:theme';
+
+const translations=new Map([
+ ['القالب','Template'],['العودة','Back'],['معاينة الطي','Fold Preview'],['الرسم المسطح','2D Dieline'],['الرسم + المجسم','2D + 3D'],['الجزء','Part'],['جهة الطباعة','Print Side'],['الخارج','Outside'],['الداخل','Inside'],['كل الطيات','All Folds'],['جارٍ التحضير…','Preparing…'],
+ ['المقاسات','Dimensions'],['الخامة','Material'],['التصميم','Artwork'],['التشطيبات','Finishes'],['الإضاءة','Lighting'],['المونتاج','Nesting'],['المشروع','Project'],['الإنتاج','Production'],
+ ['لوحة التحكم','Control Panel'],['مقاسات القالب','Template Dimensions'],['تطبيق الأبعاد','Apply Dimensions'],['المقاس الأصلي','Original Size'],['مظهر الخامة','Material Appearance'],['خامة المصدر','Source Material'],['كرتون أبيض','White Board'],['كرافت','Kraft'],['تشطيب السطح','Surface Finish'],['مطفي','Matte'],['ساتان','Satin'],['لامع','Gloss'],
+ ['التصميم على البوكس','Artwork on Box'],['رفع PNG أو JPG','Upload PNG or JPG'],['بدون تصميم','No artwork'],['حجم التصميم %','Artwork Scale %'],['إزاحة أفقية · مم','Horizontal Offset · mm'],['إزاحة رأسية · مم','Vertical Offset · mm'],['دوران التصميم °','Artwork Rotation °'],['تطبيق على المجسم','Apply to 3D'],['إعادة المحاذاة','Reset Alignment'],['تصميم اختبار الاتجاه','Orientation Test Artwork'],['إزالة التصميم','Remove Artwork'],
+ ['الفويل وSpot UV','Foil & Spot UV'],['لون الفويل','Foil Color'],['إزالة الفويل','Remove Foil'],['إزالة UV','Remove UV'],['استوديو التصوير','Lighting Studio'],['وضع العرض','View Mode'],['فحص حر بدون أرضية','Free Inspection'],['تصوير على أرضية','Studio Floor'],['الإضاءة','Lighting'],['استوديو ناعم','Soft Studio'],['تباين وحواف','Contrast & Edges'],['فحص الطباعة','Print Inspection'],['اتجاه الإضاءة','Light Direction'],['قوة الإضاءة','Exposure'],['الخلفية','Background'],['استوديو داكن','Dark Studio'],['استوديو فاتح','Light Studio'],['لون الأرضية','Floor Color'],['حفظ صورة PNG','Save PNG'],
+ ['مونتاج الفرخ','Sheet Nesting'],['فتح مساحة المونتاج','Open Nesting Workspace'],['حفظ المشروع الشامل','Save Full Project'],['فتح مشروع','Open Project'],['العودة للاستوديو','Back to Studio'],['مونتاج الجزء المحدد','Selected Part Nesting'],
+ ['طريقة القياس','Dimension Mode'],['تطبيق','Apply']
+]);
+
+const reverse=new Map([...translations].map(([a,b])=>[b,a]));
+const exactText=(root,lang)=>{
+  const map=lang==='en'?translations:reverse;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const n of nodes){const raw=n.nodeValue,trim=raw.trim();if(!trim||!map.has(trim))continue;const translated=map.get(trim);n.nodeValue=raw.replace(trim,translated);}
+};
+
+function injectStyle(){if(document.getElementById('mahabaPrefsStyle'))return;const s=document.createElement('style');s.id='mahabaPrefsStyle';s.textContent=`
+.mahaba-prefs{display:flex;gap:5px;align-items:center}.mahaba-prefs button{height:31px;min-width:36px;border:1px solid #34505c;border-radius:9px;background:#142b36;color:#dcebed;padding:0 9px;font:600 10px Tahoma,Arial;cursor:pointer}.mahaba-prefs button.active{border-color:#2cc8bb;color:#7ef0e5;background:#153d3a}
+html[data-theme="light"]{--bg:#eef3f5;--panel:#fff;--line:#c9d7dc;--text:#17313b;--muted:#637d87}
+html[data-theme="light"] body{background:#eef3f5!important;color:#17313b!important}
+html[data-theme="light"] .mahaba-head{background:linear-gradient(180deg,#fff,#edf4f5)!important;border-bottom-color:#cad9dd!important;color:#17313b!important}
+html[data-theme="light"] .mahaba-brand,html[data-theme="light"] .mahaba-head{color:#17313b!important}
+html[data-theme="light"] .mahaba-template-switch{background:#f7fbfc!important;border-color:#c7d7dc!important}
+html[data-theme="light"] .mahaba-template-switch select,html[data-theme="light"] .mahaba-back,html[data-theme="light"] .mahaba-prefs button{background:#fff!important;color:#17313b!important;border-color:#bfcfd5!important}
+html[data-theme="light"] .ms-layout #studioInspector{background:linear-gradient(160deg,#fff,#edf4f5)!important;color:#17313b!important}
+html[data-theme="light"] .ms-layout .workspace>.view{background:#e8eff2!important;border-color:#c4d4d9!important}
+html[data-theme="light"] .ms-layout .panel-toolbar,html[data-theme="light"] .ms-layout .ms-fold-controls{background:#fff!important;border-color:#c8d7dc!important;color:#17313b!important}
+html[data-theme="light"] .ms-layout #studioRail{background:#fff!important;border-color:#c8d7dc!important}
+html[data-theme="light"] .ms-layout #studioRail button{color:#49646e!important}
+html[data-theme="light"] .ms-layout #studioRail button.active{color:#087f79!important;background:#dcf5f2!important}
+html[data-theme="light"] .mgx-card,html[data-theme="light"] .mgx-panel-card{background:#fffffff5!important;border-color:#c7d7dc!important;color:#17313b!important}
+html[data-theme="light"] .mgx-title,html[data-theme="light"] .mgx-panel-metric span{color:#17313b!important}
+html[data-theme="light"] .mgx-panel-metric{background:#f3f8f9!important;border-color:#d2dfe3!important}
+html[data-theme="light"] .mgx-warning{background:#f7fafb!important}
+@media(max-width:760px){.mahaba-prefs{position:fixed;top:58px;left:8px;z-index:650;background:#0d202ad9;padding:4px;border-radius:10px;backdrop-filter:blur(12px)}html[data-theme="light"] .mahaba-prefs{background:#ffffffe8}.mahaba-prefs button{height:28px;min-width:32px;padding:0 7px;font-size:9px}}
+`;document.head.append(s);}
+
+function currentLang(){return localStorage.getItem(LANG_KEY)||'ar'}
+function currentTheme(){return localStorage.getItem(THEME_KEY)||'dark'}
+function broadcast(){const iframe=document.querySelector('[data-id="nesting"]');try{iframe?.contentWindow?.postMessage({type:'mahaba:preferences',lang:currentLang(),theme:currentTheme()},'*');}catch{}}
+function apply(){const lang=currentLang(),theme=currentTheme();document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.documentElement.dataset.theme=theme;exactText(document.body,lang);document.querySelectorAll('[data-pref-lang]').forEach(b=>b.classList.toggle('active',b.dataset.prefLang===lang));document.querySelectorAll('[data-pref-theme]').forEach(b=>b.classList.toggle('active',b.dataset.prefTheme===theme));broadcast();}
+function installControls(){if(document.querySelector('.mahaba-prefs'))return;const head=document.querySelector('.mahaba-head');if(!head)return;const box=document.createElement('div');box.className='mahaba-prefs';box.innerHTML='<button type="button" data-pref-lang="ar">ع</button><button type="button" data-pref-lang="en">EN</button><button type="button" data-pref-theme="dark" title="Dark">◐</button><button type="button" data-pref-theme="light" title="Light">☀</button>';head.append(box);for(const b of box.querySelectorAll('[data-pref-lang]'))b.onclick=()=>{localStorage.setItem(LANG_KEY,b.dataset.prefLang);apply();};for(const b of box.querySelectorAll('[data-pref-theme]'))b.onclick=()=>{localStorage.setItem(THEME_KEY,b.dataset.prefTheme);apply();};apply();}
+
+injectStyle();
+const observer=new MutationObserver(()=>{installControls();apply();});
+observer.observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('DOMContentLoaded',()=>{installControls();apply();});
+window.addEventListener('message',e=>{if(e.data?.type==='mahaba:nesting-ready')broadcast();});
+setTimeout(()=>{installControls();apply();},0);
