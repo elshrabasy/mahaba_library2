@@ -8,7 +8,7 @@ import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-
 import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-2';
 import {StudioUIController} from '../studio-src/studio-ui-controller.js?v=20261016-1';
 
-globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting.html?v=20261016-3'};
+globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting-pro.html?v=20261016-9'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
 const host=document.getElementById('canvas3d'),slider=document.getElementById('fold'),status=document.getElementById('modelStatus'),templateSwitch=document.getElementById('templateSwitch'),projectLabel=document.getElementById('projectLabel'),coreBadge=document.getElementById('coreBadge');
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.append(renderer.domElement);
