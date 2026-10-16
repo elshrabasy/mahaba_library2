@@ -22,4 +22,7 @@ if(pair){
   const check=engine.validate(pair.layout,patterns.variants,{...c,W:Math.max(c.W,pair.w),H:Math.max(c.H,pair.h)},true);
   assert.equal(check.ok,true,'Interlock pair must pass exact polygon validation');
 }
-console.log(JSON.stringify({patterns:patterns.results.map(r=>({name:r.name,recipe:r.recipe,pieces:r.layout.length,w:r.w,h:r.h})),pair:pair&&{w:pair.w,h:pair.h,minGap:pair.minGap}}));
+const c800=buildNestConfig({sheetWidth:800,sheetHeight:680,gripper:10,gap:3,rotation:'half'});
+const p800=generatePatternSolutions(engine,T,c800);
+for(const r of p800.results){assert.equal(engine.validate(r.layout,p800.variants,c800,true).ok,true,'800x680 candidate must be exact-polygon valid');}
+console.log(JSON.stringify({patterns:patterns.results.map(r=>({name:r.name,recipe:r.recipe,pieces:r.layout.length,w:r.w,h:r.h})),pair:pair&&{w:pair.w,h:pair.h,minGap:pair.minGap},sheet800x680:p800.results.map(r=>({name:r.name,recipe:r.recipe,pieces:r.layout.length,w:r.w,h:r.h}))}));
