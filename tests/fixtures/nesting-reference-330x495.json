@@ -1,0 +1,17 @@
+{
+  "reference_id": "USER-PDF-8x7x4-330x495",
+  "source": "user-provided PDF: 8 x 7 x 4.pdf",
+  "sheet": {"width_mm": 330, "height_mm": 495},
+  "expected": {
+    "pieces_per_sheet": 4,
+    "rotation_pattern_deg": [0, 180, 0, 180],
+    "pattern_family": "interlock-pair",
+    "rows": 2,
+    "pairing": "0/180 alternating interlock"
+  },
+  "notes": [
+    "Reference captures the visible production-layout pattern only.",
+    "It must not be treated as a dimensional golden test for EVC11001 because the uploaded PDF contains a different dieline.",
+    "Future benchmark becomes exact when the corresponding source dieline is available as Mahabat geometry."
+  ]
+}
