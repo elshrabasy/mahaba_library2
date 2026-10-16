@@ -2,7 +2,7 @@ import './nest-engine-core.js';
 import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-lite.js';
 import {generatePatternSolutions} from './nest-patterns.js';
 import {optimizeProductionRun,compareSheetFormats,buildHalfDieCandidate} from './nest-production-optimizer.js';
-import {contactBeamSearch} from './nest-contact-search.js';
+import {smartMixedRotationSolutions} from './nest-smart-rotation.js';
 
 self.onmessage=e=>{
   const {template,config,run={},availableSheets=[]}=e.data||{};
@@ -23,20 +23,16 @@ self.onmessage=e=>{
       if(h)halfDie.push(h);
     }
 
+    // Smart fallback: test mixed 90° orientations when the normal 0/180 set leaves a side strip.
+    // These candidates are marked requiresCrossRotation so a future grain/flute hard-lock can reject them.
+    const smartRotation=smartMixedRotationSolutions(engine,T,config);
+    if(smartRotation.results?.length)self.postMessage({type:'preview',result:smartRotation});
+
     const rel=relativeRotations(config.angles||[0,180]);
     const N=buildConvexNFP(T.cells,rel,p=>self.postMessage({type:'progress',phase:'nfp',...p}));
-
-    // Multi-seed contact search fixes odd-count cases (3-up / 5-up) that greedy pair repetition can miss.
-    const contact=contactBeamSearch(engine,T,N,config,{
-      beamWidth:config.deep?20:10,
-      maxDepth:config.deep?6:4,
-      onProgress:p=>self.postMessage({type:'progress',phase:'contact',...p})
-    });
-    if(contact.results?.length)self.postMessage({type:'preview',result:contact});
-
     const result=engine.solve(T,N,config,p=>self.postMessage({type:'progress',phase:'solve',...p}));
 
-    const merged=[...(patterns.results||[]),...halfDie,...(contact.results||[]),...(result.results||[])];
+    const merged=[...(patterns.results||[]),...halfDie,...(smartRotation.results||[]),...(result.results||[])];
     const seen=new Set(),results=[];
     for(const r of merged){
       const key=(r.layout||[]).map(a=>`${a.r}:${a.x.toFixed(2)}:${a.y.toFixed(2)}`).sort().join('|');
