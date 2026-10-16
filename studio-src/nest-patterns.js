@@ -1,6 +1,7 @@
 // Mahabat predefined nesting recipes.
 // Fast pattern candidates are generated before the heavier NFP solver.
 // All accepted layouts are still guarded by NestEngine.validate on true polygons.
+import {generate2x2TemplateSolutions} from './nest-layout-templates.js';
 
 const EPS=1e-6;
 const uniq=(arr,eps=.05)=>{
@@ -30,7 +31,6 @@ function regular(engine,T,c){
 function alternate180(engine,T,c){
   if(!c.angles.includes(0)||!c.angles.includes(180))return [];
   const vs=engine.makeVariants(T),gap=c.clearance+engine.SAFETY,a=vs[0],b=vs[2],results=[];
-  // Alternating columns. Rows are independently repeated so the pattern remains predictable and fast.
   const pitchX=Math.max(a.w,b.w)+gap,pitchY=Math.max(a.h,b.h)+gap;
   const nx=Math.floor((c.W+gap)/pitchX),ny=Math.floor((c.H+gap)/pitchY);
   if(nx>0&&ny>0){const layout=[];for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)layout.push({r:(x+y)%2?180:0,x:x*pitchX,y:y*pitchY});const r=result(engine,layout,vs,c,'Alternate 180°','alternate-180');if(r)results.push(r);}
@@ -38,8 +38,6 @@ function alternate180(engine,T,c){
 }
 
 function pairCandidates(va,vb,required){
-  // Critical placements come from vertex-to-vertex alignment. Add small clearance offsets,
-  // then cap each axis list to keep this a fast recipe generator rather than a full NFP solver.
   const xs=[],ys=[];
   for(const a of va.p)for(const b of vb.p){const dx=a[0]-b[0],dy=a[1]-b[1];xs.push(dx,dx-required,dx+required);ys.push(dy,dy-required,dy+required);}
   xs.push(-vb.w-required,-vb.w,0,va.w,va.w+required);
@@ -61,7 +59,6 @@ export function findInterlockPair(engine,T,c,ra=0,rb=180){
     const pair=normalize([{r:ra,x:0,y:0},{r:rb,x,y}]);
     const check=engine.validate(pair,vs,temp,true);if(!check.ok)continue;
     const d=engine.dims(pair,vs);if(d.w>c.W+EPS||d.h>c.H+EPS)continue;
-    // Prefer tight pair envelope; then a smaller height to resemble head-to-tail/interlocking production layouts.
     const score=d.area*1000+d.h;
     if(score<bestScore){bestScore=score;best={layout:pair,w:d.w,h:d.h,area:d.area,minGap:check.min};}
   }
@@ -87,10 +84,11 @@ function repeatCluster(engine,T,c,pair){
 export function generatePatternSolutions(engine,T,c){
   const vs=engine.makeVariants(T),all=[];
   all.push(...regular(engine,T,c));
+  all.push(...generate2x2TemplateSolutions(engine,T,c));
   all.push(...alternate180(engine,T,c));
   const pair=findInterlockPair(engine,T,c,0,180);all.push(...repeatCluster(engine,T,c,pair));
   const seen=new Set(),filtered=[];
   for(const x of all){const s=signature(x.layout);if(seen.has(s))continue;seen.add(s);filtered.push(x);}
   filtered.sort((a,b)=>b.layout.length-a.layout.length||a.area-b.area||a.h-b.h);
-  return {results:filtered.slice(0,8),pair,variants:vs};
+  return {results:filtered.slice(0,12),pair,variants:vs};
 }
