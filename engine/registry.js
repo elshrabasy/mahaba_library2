@@ -2,12 +2,19 @@ import {generateEVC11001} from './templates/EVC11001-native.js';
 import {buildMahabatNative} from './mahabat-native.js';
 import {legacyGeometryToV1,v1ToLegacyGeometry} from '../core/adapters/legacy-v1.js';
 import {generateStraightTuckEnd} from '../templates/straight-tuck-end/generate.js';
+import {generateWeeklyDisplay} from '../templates/weekly-display/generate.js';
 
 const REGISTRY=new Map([
   ['EVC11001',{kind:'legacy-geometry',generate:generateEVC11001,status:'pilot'}],
   ['MAH-FEC-STE-001',{kind:'core-v1',generateModel:generateStraightTuckEnd,status:'reference-v1'}],
+  ['MAH-WEEKLY-DISPLAY-001',{kind:'core-v1',generateModel:generateWeeklyDisplay,status:'pdf-prototype'}],
 ]);
-const ALIASES=new Map([['STE001','MAH-FEC-STE-001'],['STE','MAH-FEC-STE-001']]);
+const ALIASES=new Map([
+  ['STE001','MAH-FEC-STE-001'],
+  ['STE','MAH-FEC-STE-001'],
+  ['WEEKLY','MAH-WEEKLY-DISPLAY-001'],
+  ['WEEKLY001','MAH-WEEKLY-DISPLAY-001']
+]);
 const resolveCode=code=>ALIASES.get(code)||code;
 
 export function hasMahabatTemplate(code){return REGISTRY.has(resolveCode(code));}
