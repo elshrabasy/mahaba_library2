@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const src=fs.readFileSync(new URL('../studio-src/studio-ui-controller.js',import.meta.url),'utf8');
+const studio=fs.readFileSync(new URL('../pilot/studio-v2.js',import.meta.url),'utf8');
+assert.match(src,/Dimensions & Material/);
+assert.match(src,/data-panel=\"stock\"/);
+assert.match(src,/stockBtn\?\.remove/);
+assert.match(src,/mahaba-check-summary/);
+assert.match(src,/mahaba:lang/);
+assert.match(src,/mahaba:theme/);
+assert.match(src,/mahaba:preferences/);
+assert.match(src,/scrollTop=0/);
+assert.match(studio,/StudioUIController/);
+assert.doesNotMatch(studio,/studio-preferences\.js/);
+assert.doesNotMatch(studio,/studio-ui-patch\.js/);
+assert.match(studio,/applySceneTheme/);
+console.log('studio unified UI controller contract: ok');
