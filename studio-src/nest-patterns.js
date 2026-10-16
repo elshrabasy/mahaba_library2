@@ -12,50 +12,55 @@ const trim=(vals,limit,min,max)=>{const clean=uniq(vals).filter(v=>v>=min-EPS&&v
 function result(engine,layout,vs,c,name,recipe){const q=normalize(layout),check=engine.validate(q,vs,c,true);if(!q.length||!check.ok)return null;return {layout:q,name,recipe,minGap:Number.isFinite(check.min)?check.min:null,...engine.dims(q,vs)};}
 function regular(engine,T,c){const out=engine.regularSolution(T,c);return (out.results||[]).map(x=>({...x,recipe:'regular'}));}
 function alternate180(engine,T,c){if(!c.angles.includes(0)||!c.angles.includes(180))return [];const vs=engine.makeVariants(T),gap=c.clearance+engine.SAFETY,a=vs[0],b=vs[2],results=[],pitchX=Math.max(a.w,b.w)+gap,pitchY=Math.max(a.h,b.h)+gap,nx=Math.floor((c.W+gap)/pitchX),ny=Math.floor((c.H+gap)/pitchY);if(nx>0&&ny>0){const layout=[];for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)layout.push({r:(x+y)%2?180:0,x:x*pitchX,y:y*pitchY});const r=result(engine,layout,vs,c,'Alternate 180°','alternate-180');if(r)results.push(r);}return results;}
-function pairCandidates(va,vb,required){const xs=[],ys=[];for(const a of va.p)for(const b of vb.p){const dx=a[0]-b[0],dy=a[1]-b[1];xs.push(dx,dx-required,dx+required);ys.push(dy,dy-required,dy+required);}xs.push(-vb.w-required,-vb.w,0,va.w,va.w+required);ys.push(-vb.h-required,-vb.h,0,va.h,va.h+required);return {xs:trim(xs,72,-vb.w-required,va.w+required),ys:trim(ys,72,-vb.h-required,va.h+required)};}
+function pairCandidates(va,vb,required){const xs=[],ys=[];for(const a of va.p)for(const b of vb.p){const dx=a[0]-b[0],dy=a[1]-b[1];xs.push(dx,dx-required,dx+required);ys.push(dy,dy-required,dy+required);}xs.push(-vb.w-required,-vb.w,0,va.w,va.w+required);ys.push(-vb.h-required,-vb.h,0,va.h,va.h+required);return {xs:trim(xs,84,-vb.w-required,va.w+required),ys:trim(ys,84,-vb.h-required,va.h+required)};}
 
-export function findInterlockPair(engine,T,c,ra=0,rb=180){if(!c.angles.includes(ra)||!c.angles.includes(rb))return null;const vs=engine.makeVariants(T),va=vs[ra/90],vb=vs[rb/90],required=c.clearance+engine.SAFETY,{xs,ys}=pairCandidates(va,vb,required);let best=null,bestScore=Infinity;const temp={...c,W:Math.max(c.W,va.w+vb.w+required)*2,H:Math.max(c.H,va.h+vb.h+required)*2,angles:[ra,rb]};for(const x of xs)for(const y of ys){const pair=normalize([{r:ra,x:0,y:0},{r:rb,x,y}]),check=engine.validate(pair,vs,temp,true);if(!check.ok)continue;const d=engine.dims(pair,vs);if(d.w>c.W+EPS||d.h>c.H+EPS)continue;const score=d.area*1000+d.h;if(score<bestScore){bestScore=score;best={layout:pair,w:d.w,h:d.h,area:d.area,minGap:check.min};}}return best;}
+export function findInterlockPairSeeds(engine,T,c,ra=0,rb=180,limit=18){
+  if(!c.angles.includes(ra)||!c.angles.includes(rb))return [];
+  const vs=engine.makeVariants(T),va=vs[ra/90],vb=vs[rb/90],required=c.clearance+engine.SAFETY,{xs,ys}=pairCandidates(va,vb,required),seen=new Set(),seeds=[];
+  const temp={...c,W:Math.max(c.W,va.w+vb.w+required)*2,H:Math.max(c.H,va.h+vb.h+required)*2,angles:[ra,rb]};
+  for(const x of xs)for(const y of ys){
+    const pair=normalize([{r:ra,x:0,y:0},{r:rb,x,y}]),sig=signature(pair);if(seen.has(sig))continue;seen.add(sig);
+    const check=engine.validate(pair,vs,temp,true);if(!check.ok)continue;
+    const d=engine.dims(pair,vs);if(d.w>c.W+EPS||d.h>c.H+EPS)continue;
+    seeds.push({layout:pair,w:d.w,h:d.h,area:d.area,minGap:check.min,score:d.area*1000+d.h});
+  }
+  seeds.sort((a,b)=>a.score-b.score||a.h-b.h||a.w-b.w);
+  // Keep geometrically diverse pair envelopes; the tightest pair is not always the best seed for a 3-up layout.
+  const out=[];
+  for(const s of seeds){if(out.some(q=>Math.abs(q.w-s.w)<1&&Math.abs(q.h-s.h)<1))continue;out.push(s);if(out.length>=limit)break;}
+  return out;
+}
 
-// EngView-style residual-space fill: do not stop after discovering a good 0/180 pair.
-// Try to insert one more one-up into the negative/unused area around the validated seed.
+export function findInterlockPair(engine,T,c,ra=0,rb=180){return findInterlockPairSeeds(engine,T,c,ra,rb,1)[0]||null;}
+
+function thirdCandidates(vs,c,base,r,required){
+  const v=vs[r/90],xs=[0,c.W-v.w],ys=[0,c.H-v.h];
+  for(const a of base){
+    const av=vs[a.r/90];
+    xs.push(a.x-v.w-required,a.x-v.w,a.x,a.x+av.w,a.x+av.w+required);
+    ys.push(a.y-v.h-required,a.y-v.h,a.y,a.y+av.h,a.y+av.h+required);
+    for(const pa of av.p){const gx=pa[0]+a.x,gy=pa[1]+a.y;for(const pb of v.p){xs.push(gx-pb[0]-required,gx-pb[0],gx-pb[0]+required);ys.push(gy-pb[1]-required,gy-pb[1],gy-pb[1]+required);}}
+  }
+  const xx=trim(xs,110,0,c.W-v.w),yy=trim(ys,110,0,c.H-v.h),out=[];
+  for(const x of xx)for(const y of yy){const p={r,x,y},d=engineDimsFast([...base,p],vs);out.push({p,score:d.area*1000+d.h*10+d.w});}
+  out.sort((a,b)=>a.score-b.score);return out;
+}
+function engineDimsFast(layout,vs){const w=Math.max(...layout.map(a=>a.x+vs[a.r/90].w)),h=Math.max(...layout.map(a=>a.y+vs[a.r/90].h));return {w,h,area:w*h};}
+
 function growSeedByOne(engine,T,c,seed){
   if(!seed?.layout?.length)return null;
   const vs=engine.makeVariants(T),required=Number(c.clearance||0)+Number(engine.SAFETY||0),base=normalize(seed.layout),options=[];
-  for(const r of c.angles){
-    const v=vs[r/90];if(!v||v.w>c.W+EPS||v.h>c.H+EPS)continue;
-    const xs=[0,c.W-v.w],ys=[0,c.H-v.h];
-    for(const a of base){
-      const av=vs[a.r/90];
-      xs.push(a.x-v.w-required,a.x-v.w,a.x,a.x+av.w,a.x+av.w+required);
-      ys.push(a.y-v.h-required,a.y-v.h,a.y,a.y+av.h,a.y+av.h+required);
-      for(const pa of av.p){const gx=pa[0]+a.x,gy=pa[1]+a.y;for(const pb of v.p){xs.push(gx-pb[0]-required,gx-pb[0],gx-pb[0]+required);ys.push(gy-pb[1]-required,gy-pb[1],gy-pb[1]+required);}}
-    }
-    const xx=trim(xs,96,0,c.W-v.w),yy=trim(ys,96,0,c.H-v.h);
-    for(const x of xx)for(const y of yy){
-      const p={r,x,y},d=engine.dims([...base,p],vs);
-      options.push({p,score:d.area*1000+d.h*10+d.w});
-    }
-  }
+  for(const r of c.angles){const v=vs[r/90];if(!v||v.w>c.W+EPS||v.h>c.H+EPS)continue;options.push(...thirdCandidates(vs,c,base,r,required));}
   options.sort((a,b)=>a.score-b.score);
-  let best=null,bestScore=Infinity;
-  // Validate the most compact critical placements first; this keeps mobile workers responsive.
-  for(const o of options.slice(0,6000)){
+  // First valid compact placement is enough here; final ranking happens across multiple pair seeds.
+  for(const o of options.slice(0,2600)){
     const layout=normalize([...base,o.p]),check=engine.validate(layout,vs,c,true);if(!check.ok)continue;
-    const d=engine.dims(layout,vs),score=d.area*1000+d.h*10+d.w;
-    if(score<bestScore){bestScore=score;best={layout,w:d.w,h:d.h,area:d.area,minGap:check.min};}
+    const d=engine.dims(layout,vs);return {layout,w:d.w,h:d.h,area:d.area,minGap:check.min};
   }
-  return best;
+  return null;
 }
 
-function growSeed(engine,T,c,seed,maxExtra=4){
-  let current=seed,best=seed;
-  for(let i=0;i<maxExtra;i++){
-    const next=growSeedByOne(engine,T,c,current);if(!next||next.layout.length<=current.layout.length)break;
-    current=next;best=next;
-  }
-  return best;
-}
-
+function growSeed(engine,T,c,seed,maxExtra=4){let current=seed,best=seed;for(let i=0;i<maxExtra;i++){const next=growSeedByOne(engine,T,c,current);if(!next||next.layout.length<=current.layout.length)break;current=next;best=next;}return best;}
 function repeatCluster(engine,T,c,pair){if(!pair)return [];const vs=engine.makeVariants(T),gap=c.clearance+engine.SAFETY,results=[];for(const stagger of [false,true]){const pitchX=pair.w+gap,pitchY=pair.h+gap,layout=[],rows=Math.max(1,Math.floor((c.H+gap)/pitchY));for(let row=0;row<rows;row++){const offset=stagger&&row%2?pitchX/2:0,cols=Math.max(0,Math.floor((c.W-offset+gap)/pitchX));for(let col=0;col<cols;col++)for(const p of pair.layout)layout.push({...p,x:p.x+offset+col*pitchX,y:p.y+row*pitchY});}const r=result(engine,layout,vs,c,stagger?'Interlock Pair · Staggered':'Interlock Pair · 0°/180°','interlock-pair');if(r)results.push(r);}return results;}
 
 export function generatePatternSolutions(engine,T,c){
@@ -63,15 +68,17 @@ export function generatePatternSolutions(engine,T,c){
   all.push(...regular(engine,T,c));
   all.push(...generate2x2TemplateSolutions(engine,T,c));
   all.push(...alternate180(engine,T,c));
-  const pair=findInterlockPair(engine,T,c,0,180);
+  const pairSeeds=findInterlockPairSeeds(engine,T,c,0,180,18),pair=pairSeeds[0]||null;
   all.push(...repeatCluster(engine,T,c,pair));
-  if(pair){
-    const grown=growSeed(engine,T,c,pair,4);
-    if(grown?.layout?.length>pair.layout.length){
-      const g=result(engine,grown.layout,vs,c,`Residual Fill · ${grown.layout.length} pcs`,'residual-fill');
-      if(g)all.push(g);
+  let bestGrown=null;
+  for(const seed of pairSeeds){
+    const grown=growSeed(engine,T,c,seed,3);
+    if(grown?.layout?.length>seed.layout.length){
+      if(!bestGrown||grown.layout.length>bestGrown.layout.length||grown.layout.length===bestGrown.layout.length&&grown.area<bestGrown.area)bestGrown=grown;
+      if(grown.layout.length>=3)break;
     }
   }
+  if(bestGrown){const g=result(engine,bestGrown.layout,vs,c,`Residual Fill · ${bestGrown.layout.length} pcs`,'residual-fill');if(g)all.push(g);}
   const seen=new Set(),filtered=[];
   for(const x of all){const s=signature(x.layout);if(seen.has(s))continue;seen.add(s);filtered.push(x);}
   filtered.sort((a,b)=>b.layout.length-a.layout.length||a.area-b.area||a.h-b.h);
