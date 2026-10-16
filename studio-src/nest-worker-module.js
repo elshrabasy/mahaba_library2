@@ -2,6 +2,7 @@ import './nest-engine-core.js';
 import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-lite.js';
 import {generatePatternSolutions} from './nest-patterns.js';
 import {optimizeProductionRun,compareSheetFormats,buildHalfDieCandidate} from './nest-production-optimizer.js';
+import {contactBeamSearch} from './nest-contact-search.js';
 
 self.onmessage=e=>{
   const {template,config,run={},availableSheets=[]}=e.data||{};
@@ -13,7 +14,6 @@ self.onmessage=e=>{
     const regular=engine.regularSolution(T,config);
     self.postMessage({type:'preview',result:regular});
 
-    // EngView-style predefined layouts: fast recipes before the heavier NFP search.
     const patterns=generatePatternSolutions(engine,T,config);
     if(patterns.results?.length)self.postMessage({type:'preview',result:patterns});
 
@@ -25,12 +25,21 @@ self.onmessage=e=>{
 
     const rel=relativeRotations(config.angles||[0,180]);
     const N=buildConvexNFP(T.cells,rel,p=>self.postMessage({type:'progress',phase:'nfp',...p}));
+
+    // Multi-seed contact search fixes odd-count cases (3-up / 5-up) that greedy pair repetition can miss.
+    const contact=contactBeamSearch(engine,T,N,config,{
+      beamWidth:config.deep?20:10,
+      maxDepth:config.deep?6:4,
+      onProgress:p=>self.postMessage({type:'progress',phase:'contact',...p})
+    });
+    if(contact.results?.length)self.postMessage({type:'preview',result:contact});
+
     const result=engine.solve(T,N,config,p=>self.postMessage({type:'progress',phase:'solve',...p}));
 
-    const merged=[...(patterns.results||[]),...halfDie,...(result.results||[])];
+    const merged=[...(patterns.results||[]),...halfDie,...(contact.results||[]),...(result.results||[])];
     const seen=new Set(),results=[];
     for(const r of merged){
-      const key=(r.layout||[]).map(a=>`${a.r}:${a.x.toFixed(2)}:${a.y.toFixed(2)}`).join('|');
+      const key=(r.layout||[]).map(a=>`${a.r}:${a.x.toFixed(2)}:${a.y.toFixed(2)}`).sort().join('|');
       if(seen.has(key))continue;
       seen.add(key);
       results.push(r);
@@ -51,7 +60,7 @@ self.onmessage=e=>{
       type:'result',
       result:{
         ...result,
-        results:production.results.slice(0,10),
+        results:production.results.slice(0,12),
         patternPair:patterns.pair||null,
         productionBest:production.best||null,
         productionHints:production.hints||[],
