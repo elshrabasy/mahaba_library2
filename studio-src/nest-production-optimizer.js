@@ -1,0 +1,98 @@
+// EngView-inspired production optimization layer for Mahabat Nesting.
+// This module does not replace true-shape geometry validation. It ranks validated
+// layouts by production-run efficiency, sheet usage, excess, and waste.
+
+const EPS=1e-9;
+
+export function effectiveSheetConfig(base={},sheet={}){
+  const sheetW=Number(sheet.width_mm ?? sheet.width ?? base.sheetW ?? base.W ?? 0);
+  const sheetH=Number(sheet.height_mm ?? sheet.height ?? base.sheetH ?? base.H ?? 0);
+  const offsetX=Number(base.offsetX ?? 5);
+  const offsetY=Number(base.offsetY ?? Math.max(Number(base.gripper ?? 10),5));
+  const right=Number(base.marginRight ?? 5),bottom=Number(base.marginBottom ?? 5);
+  return {
+    ...base,
+    sheetW,
+    sheetH,
+    W:Math.max(0,sheetW-offsetX-right),
+    H:Math.max(0,sheetH-offsetY-bottom),
+    offsetX,
+    offsetY
+  };
+}
+
+function polygonArea(template){
+  const p=template?.polygon||[];
+  if(p.length<3)return 0;
+  return Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-a[1]*b[0]},0)/2);
+}
+
+export function productionStats(layoutResult,template,config,{quantity=1000,allowance_pct=0,overproduction_pct=0}={}){
+  const parts=Math.max(0,layoutResult?.layout?.length||0);
+  const requested=Math.max(0,Math.ceil(Number(quantity)||0));
+  const allowance=Math.max(0,Math.ceil(requested*Math.max(0,Number(allowance_pct)||0)/100));
+  const target=requested+allowance;
+  const sheets=parts>0?Math.ceil(target/parts):Infinity;
+  const produced=Number.isFinite(sheets)?sheets*parts:0;
+  const excess=Math.max(0,produced-target);
+  const paidLimit=requested*Math.max(0,Number(overproduction_pct)||0)/100;
+  const payableExcess=Math.min(excess,Math.floor(paidLimit+EPS));
+  const area=polygonArea(template);
+  const sheetArea=Math.max(EPS,Number(config.sheetW||config.W||0)*Number(config.sheetH||config.H||0));
+  const utilization=Math.min(1,parts*area/sheetArea);
+  const wastePercent=Math.max(0,(1-utilization)*100);
+  return {parts_per_sheet:parts,quantity:requested,allowance,target,sheets,produced,excess,payable_excess:payableExcess,utilization,waste_percent:wastePercent};
+}
+
+export function optimizeProductionRun(layouts,template,config,run={}){
+  const ranked=(layouts||[]).map((layout,index)=>{
+    const stats=productionStats(layout,template,config,run);
+    // Primary: minimum sheets. Secondary: minimum excess, then waste, then smaller used area.
+    const score=(Number.isFinite(stats.sheets)?stats.sheets:1e9)*1e12 + stats.excess*1e8 + stats.waste_percent*1e4 + Number(layout.area||0);
+    return {...layout,production:stats,production_score:score,source_index:index};
+  }).sort((a,b)=>a.production_score-b.production_score);
+
+  const best=ranked[0]||null;
+  const hints=[];
+  if(best){
+    const p=best.production.parts_per_sheet,target=best.production.target,sheets=best.production.sheets;
+    if(p>0&&Number.isFinite(sheets)){
+      const ideal=Math.max(1,Math.ceil(target/sheets));
+      if(ideal!==p){
+        hints.push({type:ideal>p?'ADD_PARTS':'REMOVE_PARTS',current:p,suggested:ideal,delta:ideal-p,reason:'reduce production excess for the requested run'});
+      }
+      if(best.production.excess>0)hints.push({type:'EXCESS',pieces:best.production.excess,reason:'current layout produces more than quantity + allowance'});
+    }
+  }
+  return {results:ranked,best,hints};
+}
+
+export function compareSheetFormats({engine,template,baseConfig,sheets=[],patternSolver,run={}}){
+  if(typeof patternSolver!=='function')throw new Error('patternSolver is required');
+  const out=[];
+  for(const sheet of sheets){
+    const config=effectiveSheetConfig(baseConfig,sheet);
+    if(!(config.W>0&&config.H>0))continue;
+    const patterns=patternSolver(engine,template,config);
+    const production=optimizeProductionRun(patterns.results||[],template,config,run);
+    if(!production.best)continue;
+    out.push({sheet:{name:sheet.name||`${config.sheetW}×${config.sheetH}`,width_mm:config.sheetW,height_mm:config.sheetH},config,best:production.best,hints:production.hints});
+  }
+  out.sort((a,b)=>a.best.production.sheets-b.best.production.sheets||a.best.production.excess-b.best.production.excess||a.best.production.waste_percent-b.best.production.waste_percent);
+  return out;
+}
+
+export function buildHalfDieCandidate(engine,template,config,baseLayout){
+  // EngView-style half-die concept: right half is a 180° counterpart of the left.
+  // Candidate is accepted only when true-polygon validation succeeds.
+  const vs=engine.makeVariants(template);
+  const left=(baseLayout||[]).map(x=>({...x}));
+  if(!left.length||!config.angles?.includes?.(180))return null;
+  const used=engine.dims(left,vs);
+  const rightOffset=used.w+Number(config.clearance||0)+Number(engine.SAFETY||0);
+  const mirrored=left.map(a=>({r:(a.r+180)%360,x:a.x+rightOffset,y:a.y}));
+  const layout=[...left,...mirrored];
+  const check=engine.validate(layout,vs,config,true);
+  if(!check.ok)return null;
+  return {layout,name:'Half-Die · 180° mirrored pair',recipe:'half-die',minGap:Number.isFinite(check.min)?check.min:null,...engine.dims(layout,vs)};
+}
