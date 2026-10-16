@@ -9,11 +9,12 @@ self.onmessage=e=>{
     if(!engine)throw new Error('محرك المونتاج غير متاح.');
     const T=prepareIrregularTemplate(template);
 
-    const patterns=generatePatternSolutions(engine,T,config);
-    self.postMessage({type:'patterns',result:patterns});
+    const regular=engine.regularSolution(T,config);
+    self.postMessage({type:'preview',result:regular});
 
-    const preview=engine.regularSolution(T,config);
-    self.postMessage({type:'preview',result:preview});
+    // EngView-style predefined layouts: fast recipes before the heavier NFP search.
+    const patterns=generatePatternSolutions(engine,T,config);
+    if(patterns.results?.length)self.postMessage({type:'preview',result:patterns});
 
     const rel=relativeRotations(config.angles||[0,180]);
     const N=buildConvexNFP(T.cells,rel,p=>self.postMessage({type:'progress',phase:'nfp',...p}));
