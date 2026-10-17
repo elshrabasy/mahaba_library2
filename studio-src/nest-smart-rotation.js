@@ -29,6 +29,7 @@ export function smartMixedRotationSolutions(engine,T,c){
 
   const a0=vs[0],a90=vs[1],a180=vs[2],a270=vs[3];
 
+  // Two horizontal blanks stacked + one 90° blank in the remaining side strip.
   add([
     {r:0,x:0,y:0},
     {r:0,x:0,y:a0.h+gap},
@@ -41,6 +42,7 @@ export function smartMixedRotationSolutions(engine,T,c){
     {r:270,x:a180.w+gap,y:0}
   ],'Smart Rotation · 2×180° + 1×270°');
 
+  // Two 90° blanks side-by-side + one 0° blank in the remaining lower strip.
   add([
     {r:90,x:0,y:0},
     {r:90,x:a90.w+gap,y:0},
@@ -53,6 +55,7 @@ export function smartMixedRotationSolutions(engine,T,c){
     {r:180,x:0,y:a270.h+gap}
   ],'Smart Rotation · 2×270° + 1×180°');
 
+  // Mirrored side-strip variants can matter for asymmetric blanks.
   add([
     {r:90,x:0,y:0},
     {r:0,x:a90.w+gap,y:0},
