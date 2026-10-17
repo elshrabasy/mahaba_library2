@@ -3,9 +3,10 @@ import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-l
 import {generatePatternSolutions} from './nest-patterns.js';
 import {optimizeProductionRun,compareSheetFormats,buildHalfDieCandidate} from './nest-production-optimizer.js';
 import {smartMixedRotationSolutions} from './nest-smart-rotation.js';
+import {gaNestingOptimize} from './nest-ga-optimizer.js';
 
 self.onmessage=e=>{
-  const {template,config,run={},availableSheets=[]}=e.data||{};
+  const {template,config,run={},availableSheets=[],search={}}=e.data||{};
   try{
     const engine=globalThis.MahabaNestEngine;
     if(!engine)throw new Error('محرك المونتاج غير متاح.');
@@ -23,16 +24,37 @@ self.onmessage=e=>{
       if(h)halfDie.push(h);
     }
 
-    // Smart fallback: test mixed 90° orientations when the normal 0/180 set leaves a side strip.
-    // These candidates are marked requiresCrossRotation so a future grain/flute hard-lock can reject them.
+    // Mixed 90° fallback is useful for odd-count layouts. It remains marked as cross-rotation
+    // so grain/flute production rules can reject it later when direction is locked.
     const smartRotation=smartMixedRotationSolutions(engine,T,config);
     if(smartRotation.results?.length)self.postMessage({type:'preview',result:smartRotation});
+
+    // SVGnest-inspired evolutionary layer: vary rotation genes over multiple generations,
+    // but accept placements only through Mahabat's exact-polygon validator.
+    const gaAngles=search.allowCrossRotation===false
+      ? [...new Set(config.angles||[0,180])]
+      : [...new Set([...(config.angles||[0,180]),90,270])];
+    const quality=search.quality||'balanced';
+    const presets={
+      fast:{population:8,generations:6,mutation:.12},
+      balanced:{population:14,generations:12,mutation:.18},
+      deep:{population:24,generations:24,mutation:.22},
+      extreme:{population:36,generations:42,mutation:.26}
+    };
+    const qp=presets[quality]||presets.balanced;
+    const ga=gaNestingOptimize(engine,T,{...config,angles:gaAngles},{
+      ...qp,
+      angles:gaAngles,
+      seed:Number(search.seed||20261017),
+      onProgress:p=>self.postMessage({type:'progress',phase:'ga',...p})
+    });
+    if(ga.results?.length)self.postMessage({type:'preview',result:ga});
 
     const rel=relativeRotations(config.angles||[0,180]);
     const N=buildConvexNFP(T.cells,rel,p=>self.postMessage({type:'progress',phase:'nfp',...p}));
     const result=engine.solve(T,N,config,p=>self.postMessage({type:'progress',phase:'solve',...p}));
 
-    const merged=[...(patterns.results||[]),...halfDie,...(smartRotation.results||[]),...(result.results||[])];
+    const merged=[...(patterns.results||[]),...halfDie,...(smartRotation.results||[]),...(ga.results||[]),...(result.results||[])];
     const seen=new Set(),results=[];
     for(const r of merged){
       const key=(r.layout||[]).map(a=>`${a.r}:${a.x.toFixed(2)}:${a.y.toFixed(2)}`).sort().join('|');
@@ -56,8 +78,9 @@ self.onmessage=e=>{
       type:'result',
       result:{
         ...result,
-        results:production.results.slice(0,12),
+        results:production.results.slice(0,14),
         patternPair:patterns.pair||null,
+        ga:{generations:ga.generations,population:ga.population,mutation:ga.mutation,best:ga.results?.[0]?.layout?.length||0},
         productionBest:production.best||null,
         productionHints:production.hints||[],
         sheetOptimization
