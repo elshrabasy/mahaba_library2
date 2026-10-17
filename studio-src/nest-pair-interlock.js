@@ -30,7 +30,7 @@ function contactVertices(polygon){
 
 export function createInterlockSearch(engine,template,config){
   const variants=engine.makeVariants(template),required=config.clearance+engine.SAFETY,contactGap=required+.001;
-  const contacts=new Map(),pairs=new Map(),features=variants.map(variant=>contactVertices(variant.p));
+  const contacts=new Map(),pairs=new Map(),contactChecks=new Map(),features=variants.map(variant=>contactVertices(variant.p));
   const fills=new Map(),refinements=new Map();
   const maxParts=Math.min(80,Math.floor(config.W*config.H/engine.area(template.polygon)));
   const compactness=layout=>{
@@ -51,12 +51,12 @@ export function createInterlockSearch(engine,template,config){
     const key=`${firstRotation},${secondRotation}`;
     if(contacts.has(key))return contacts.get(key);
     const first=variants[firstRotation/90],second=variants[secondRotation/90],offsets=new Map();
-    const add=(x,y)=>{
-      if(Number.isFinite(x+y))offsets.set(`${x.toFixed(4)},${y.toFixed(4)}`,{x,y});
+    const add=(offsetX,offsetY)=>{
+      if(Number.isFinite(offsetX+offsetY))offsets.set(`${offsetX.toFixed(4)},${offsetY.toFixed(4)}`,{x:offsetX,y:offsetY});
     };
     for(const fixed of features[firstRotation/90])for(const moving of features[secondRotation/90]){
-      const x=fixed[0]-moving[0],y=fixed[1]-moving[1];
-      for(const [dx,dy] of [[contactGap,0],[-contactGap,0],[0,contactGap],[0,-contactGap]])add(x+dx,y+dy);
+      const offsetX=fixed[0]-moving[0],offsetY=fixed[1]-moving[1];
+      for(const [dx,dy] of [[contactGap,0],[-contactGap,0],[0,contactGap],[0,-contactGap]])add(offsetX+dx,offsetY+dy);
     }
     const addEdgeContacts=(fixedPolygon,movingFeatures,reverse)=>{
       const signedArea=fixedPolygon.reduce((sum,point,index)=>{
@@ -81,8 +81,8 @@ export function createInterlockSearch(engine,template,config){
     };
     addEdgeContacts(first.p,features[secondRotation/90],false);
     addEdgeContacts(second.p,features[firstRotation/90],true);
-    for(const x of [0,first.w-second.w,-second.w-contactGap,first.w+contactGap]){
-      for(const y of [0,first.h-second.h,-second.h-contactGap,first.h+contactGap])add(x,y);
+    for(const offsetX of [0,first.w-second.w,-second.w-contactGap,first.w+contactGap]){
+      for(const offsetY of [0,first.h-second.h,-second.h-contactGap,first.h+contactGap])add(offsetX,offsetY);
     }
     const result=[...offsets.values()];
     contacts.set(key,result);
@@ -94,19 +94,18 @@ export function createInterlockSearch(engine,template,config){
     if(pairs.has(pairKey))return pairs.get(pairKey);
     const first=variants[firstRotation/90],second=variants[secondRotation/90];
     const candidates=contactOffsets(firstRotation,secondRotation).map(offset=>{
-      const w=Math.max(first.w,offset.x+second.w)-Math.min(0,offset.x);
-      const h=Math.max(first.h,offset.y+second.h)-Math.min(0,offset.y);
-      return {...offset,w,h,area:w*h};
+      const width=Math.max(first.w,offset.x+second.w)-Math.min(0,offset.x);
+      const height=Math.max(first.h,offset.y+second.h)-Math.min(0,offset.y);
+      return {...offset,w:width,h:height,area:width*height};
     }).filter(candidate=>candidate.w<=config.W+EPS&&candidate.h<=config.H+EPS);
-    const accepted=new Map(),checked=new Map();
+    const accepted=new Map();
     const rankings=[compareDimensions,(first,second)=>first.w-second.w||compareDimensions(first,second),(first,second)=>first.h-second.h||compareDimensions(first,second)];
     for(const rank of rankings){
       candidates.sort(rank);
       let found=0;
       for(const candidate of candidates){
         const layout=normalize([{r:firstRotation,x:0,y:0},{r:secondRotation,x:candidate.x,y:candidate.y}]),key=signature(layout);
-        if(!checked.has(key))checked.set(key,engine.validate(layout,variants,config).ok);
-        if(!checked.get(key))continue;
+        if(!contactIsFeasible(firstRotation,secondRotation,candidate))continue;
         if(!accepted.has(key))accepted.set(key,describe(layout));
         if(++found>=3)break;
       }
@@ -115,35 +114,46 @@ export function createInterlockSearch(engine,template,config){
     pairs.set(pairKey,result);
     return result;
   }
-  function bestPlacement(layout,rotations=config.angles,incumbent=null){
+  function contactIsFeasible(firstRotation,secondRotation,offset){
+    const key=`${firstRotation},${secondRotation}:${offset.x.toFixed(4)},${offset.y.toFixed(4)}`;
+    if(!contactChecks.has(key))contactChecks.set(key,engine.pairCheck({r:firstRotation,x:0,y:0},{r:secondRotation,x:offset.x,y:offset.y},variants,required).ok);
+    return contactChecks.get(key);
+  }
+  function bestPlacement(layout,rotations=config.angles,incumbent=null,fullContacts=false){
     const candidates=new Map();
     for(const rotation of rotations){
       const variant=variants[rotation/90],maxX=config.W-variant.w,maxY=config.H-variant.h;
       if(maxX<-EPS||maxY<-EPS)continue;
-      const add=(x,y)=>{
-        if(x<-EPS||y<-EPS||x>maxX+EPS||y>maxY+EPS)return;
-        const part={r:rotation,x:Math.max(0,x),y:Math.max(0,y)};
+      const add=(offsetX,offsetY,anchor=null,offset=null)=>{
+        if(offsetX<-EPS||offsetY<-EPS||offsetX>maxX+EPS||offsetY>maxY+EPS)return;
+        const part={r:rotation,x:Math.max(0,offsetX),y:Math.max(0,offsetY)};
         const dimensions=incumbent?compactness([...layout,part]):engine.dims([...layout,part],variants);
         if(incumbent&&compareCompactness(dimensions,incumbent)>=-EPS)return;
-        candidates.set(signature([part]),{part,...dimensions});
+        if(offset&&!contactIsFeasible(anchor.r,rotation,offset))return;
+        candidates.set(signature([part]),{part,anchor,...dimensions});
       };
-      for(const x of [0,maxX])for(const y of [0,maxY])add(x,y);
-      if(incumbent)for(const x of [incumbent.part.x,incumbent.part.x-1,incumbent.part.x+1])for(const y of [incumbent.part.y,incumbent.part.y-1,incumbent.part.y+1])add(x,y);
+      for(const offsetX of [0,maxX])for(const offsetY of [0,maxY])add(offsetX,offsetY);
+      if(incumbent)for(const offsetX of [incumbent.part.x,incumbent.part.x-1,incumbent.part.x+1])for(const offsetY of [incumbent.part.y,incumbent.part.y-1,incumbent.part.y+1])add(offsetX,offsetY);
       for(const fixed of layout){
-        for(const pair of findPairs(fixed.r,rotation)){
-          const [anchor,moving]=pair.layout;
-          add(fixed.x+moving.x-anchor.x,fixed.y+moving.y-anchor.y);
+        if(fullContacts){
+          for(const offset of contactOffsets(fixed.r,rotation))add(fixed.x+offset.x,fixed.y+offset.y,fixed,offset);
+        }else{
+          for(const pair of findPairs(fixed.r,rotation)){
+            const [anchor,moving]=pair.layout;
+            add(fixed.x+moving.x-anchor.x,fixed.y+moving.y-anchor.y,fixed);
+          }
         }
         const fixedVariant=variants[fixed.r/90];
-        for(const x of [0,maxX,fixed.x,fixed.x+fixedVariant.w-variant.w,fixed.x+fixedVariant.w+required,fixed.x-variant.w-required]){
-          for(const y of [0,maxY,fixed.y,fixed.y+fixedVariant.h-variant.h,fixed.y+fixedVariant.h+required,fixed.y-variant.h-required])add(x,y);
+        for(const offsetX of [0,maxX,fixed.x,fixed.x+fixedVariant.w-variant.w,fixed.x+fixedVariant.w+required,fixed.x-variant.w-required]){
+          for(const offsetY of [0,maxY,fixed.y,fixed.y+fixedVariant.h-variant.h,fixed.y+fixedVariant.h+required,fixed.y-variant.h-required])add(offsetX,offsetY);
         }
       }
     }
     const ordered=[...candidates.values()].sort(compareCompactness);
     for(const candidate of ordered){
-      if(layout.every(fixed=>engine.pairCheck(fixed,candidate.part,variants,required).ok)&&engine.validate([...layout,candidate.part],variants,config).ok)return candidate.part;
+      if(layout.every(fixed=>fixed===candidate.anchor||contactIsFeasible(fixed.r,candidate.part.r,{x:candidate.part.x-fixed.x,y:candidate.part.y-fixed.y}))&&engine.validate([...layout,candidate.part],variants,config).ok)return candidate.part;
     }
+    if(!incumbent&&!fullContacts&&layout.length)return bestPlacement(layout,rotations,null,true);
     return null;
   }
   function residualFill(seed){

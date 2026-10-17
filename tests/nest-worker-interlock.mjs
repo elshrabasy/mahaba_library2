@@ -25,6 +25,7 @@ try{
   assert.ok(best.production,'Count-first alternatives must retain production metrics');
   for(const candidate of result.results)assert.equal(engine.validate(candidate.layout,variants,result.config,true).ok,true);
   for(const preview of messages.filter(message=>message.type==='preview')){
+    assert.ok(preview.result.variants,'Every preview must retain geometry metadata for the legacy renderer');
     assert.ok(compareNestingLayouts(best,preview.result.results[0])<=0,'Final result must not regress below any preview');
   }
 
@@ -36,7 +37,18 @@ try{
   for(const message of messages.filter(message=>message.type==='preview'||message.type==='result')){
     for(const candidate of message.result.results)assert.equal(engine.validate(candidate.layout,variants,config,true).ok,true,'All phases must respect the rotation lock');
   }
-  console.log(JSON.stringify({ok:true,workerBest:{pieces:best.layout.length,area:best.area},lockedBest:locked.results[0].layout.length}));
+
+  engine.solve=originalSolve;
+  messages.length=0;
+  const concave={polygon:[[0,0],[30,0],[30,10],[15,10],[15,30],[0,30]],cuts:[],creases:[]};
+  const smallConfig={W:65,H:65,clearance:2,angles:[0,180],deep:false};
+  self.onmessage({data:{template:concave,config:smallConfig,search:{allowCrossRotation:false,quality:'fast'}}});
+  assert.ok(!messages.some(message=>message.type==='error'));
+  const integrated=messages.find(message=>message.type==='result')?.result;
+  assert.ok(integrated,'The unmodified NFP solver must complete through the worker');
+  assert.ok(integrated.results[0].layout.length>=engine.regularSolution(concave,smallConfig).results[0].layout.length);
+  for(const candidate of integrated.results)assert.equal(engine.validate(candidate.layout,engine.makeVariants(concave),smallConfig,true).ok,true);
+  console.log(JSON.stringify({ok:true,workerBest:{pieces:best.layout.length,area:best.area},lockedBest:locked.results[0].layout.length,realNfpBest:integrated.results[0].layout.length}));
 }finally{
   engine.solve=originalSolve;
   delete globalThis.self;
