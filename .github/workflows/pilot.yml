@@ -31,6 +31,7 @@ jobs:
           node --check studio-src/native_gpu.js
           node --check studio-src/nest-engine-core.js
           node --check studio-src/nest-patterns.js
+          node --check studio-src/nest-pair-interlock.js
           node --check studio-src/nest-smart-rotation.js
           node --check studio-src/nest-ga-optimizer.js
           node --check studio-src/nest-worker-module.js

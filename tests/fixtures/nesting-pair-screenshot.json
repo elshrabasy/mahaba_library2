@@ -1,0 +1,17 @@
+{
+  "reference_id": "EVC11001-upper-left-180-review",
+  "source": "User screenshot: two same-direction horizontal blanks on the left and one vertical blank on the right",
+  "parameters": {"L":125,"W":105,"H":88,"DT":1,"MAT":1,"FD":2},
+  "settings": {"sheetWidth":800,"sheetHeight":680,"gripper":10,"gap":3,"rotation":"all"},
+  "baseline": [
+    {"r":0,"x":0,"y":0},
+    {"r":0,"x":0,"y":284.925},
+    {"r":90,"x":492.6,"y":0}
+  ],
+  "witness": [
+    {"r":180,"x":0,"y":0},
+    {"r":0,"x":0,"y":204.243},
+    {"r":90,"x":492.6,"y":0}
+  ],
+  "notes": "The screenshot has no printed dimensions; this numerical reproduction uses the existing frozen default-template 800x680 benchmark. Witness placements are checked independently against exact polygons."
+}
