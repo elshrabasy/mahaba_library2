@@ -2,7 +2,7 @@
 // Fast pattern candidates are generated before the heavier NFP solver.
 // All accepted layouts are still guarded by NestEngine.validate on true polygons.
 import {generate2x2TemplateSolutions} from './nest-layout-templates.js';
-import {createInterlockSearch,compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-4';
+import {createInterlockSearch,compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-5';
 
 const signature=layout=>layout.map(a=>`${a.r}:${a.x.toFixed(2)}:${a.y.toFixed(2)}`).join('|');
 

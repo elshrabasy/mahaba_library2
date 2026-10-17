@@ -1,10 +1,10 @@
 import './nest-engine-core.js';
 import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-lite.js';
-import {generatePatternSolutions} from './nest-patterns.js?v=20261017-4';
+import {generatePatternSolutions} from './nest-patterns.js?v=20261017-5';
 import {optimizeProductionRun,compareSheetFormats,buildHalfDieCandidate} from './nest-production-optimizer.js';
 import {smartMixedRotationSolutions} from './nest-smart-rotation.js';
 import {gaNestingOptimize} from './nest-ga-optimizer.js';
-import {createInterlockSearch,refineInterlockSolutions,compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-4';
+import {createInterlockSearch,refineInterlockSolutions,compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-5';
 
 self.onmessage=e=>{
   const {template,config,run={},availableSheets=[],search={}}=e.data||{};
@@ -25,7 +25,8 @@ self.onmessage=e=>{
     const halfDie=[];
     for(const base of (patterns.results||[]).slice(0,4)){const h=buildHalfDieCandidate(engine,T,effectiveConfig,base.layout);if(h)halfDie.push(h);}
 
-    const smartRotation={results:smartMixedRotationSolutions(engine,T,effectiveConfig).results.filter(candidate=>engine.validate(candidate.layout,interlockSearch.variants,effectiveConfig).ok)};
+    const smartCandidates=smartMixedRotationSolutions(engine,T,effectiveConfig);
+    const smartRotation={...smartCandidates,results:smartCandidates.results.filter(candidate=>engine.validate(candidate.layout,interlockSearch.variants,effectiveConfig).ok)};
     if(smartRotation.results?.length)self.postMessage({type:'preview',result:smartRotation});
 
     const deterministic=[...(regular.results||[]),...(patterns.results||[]),...halfDie,...(smartRotation.results||[])];

@@ -7,9 +7,9 @@
 <div class="section"><h3>تشغيل الإنتاج</h3><div class="grid"><label class="field"><span>الكمية</span><input id="qty" type="number" value="1000"></label><label class="field"><span>هالك تجهيز %</span><input id="allow" type="number" value="2" step=".1"></label><label class="field full"><span>زيادة مسموحة %</span><input id="over" type="number" value="0" step=".1"></label></div></div>
 <button id="runBtn" class="primary">ابدأ التحسين الذكي</button><div class="progress"><i id="bar"></i></div><div id="status" class="status">جاهز</div><div id="gaStatus" class="gaStatus">GA: لم يبدأ بعد</div><div class="legend"><span><i class="cut"></i>قص</span><span><i class="crease"></i>تكسير</span></div><div id="alts" class="alts"></div></aside>
 <main><div class="stage"><div class="stats"><div class="stat"><b id="count">—</b><span>قطعة/فرخ</span></div><div class="stat"><b id="sheets">—</b><span>عدد الأفرخ</span></div><div class="stat"><b id="waste">—</b><span>هالك</span></div><div class="stat"><b id="excess">—</b><span>زيادة</span></div></div><div class="prefs"><button id="lang">EN</button><button id="theme">☀</button></div></div><div class="canvasWrap"><div class="canvas"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div></div></main></div>
-<script src="./nest-engine-core.js?v=20261017-4"></script><script type="module">
-import {prepareIrregularTemplate} from './nfp-lite.js?v=20261017-4';
-import {compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-4';
+<script src="./nest-engine-core.js?v=20261017-5"></script><script type="module">
+import {prepareIrregularTemplate} from './nfp-lite.js?v=20261017-5';
+import {compareNestingLayouts} from './nest-pair-interlock.js?v=20261017-5';
 const $=id=>document.getElementById(id),engine=globalThis.MahabaNestEngine;let state={template:null,layout:[],result:null,index:0,worker:null};
 function prefs(){return{lang:localStorage.getItem('mahaba:lang')||'ar',theme:localStorage.getItem('mahaba:theme')||'dark'}}function applyPrefs(p=prefs()){document.documentElement.lang=p.lang;document.documentElement.dir=p.lang==='ar'?'rtl':'ltr';document.documentElement.dataset.theme=p.theme;$('lang').textContent=p.lang==='ar'?'EN':'ع';$('theme').textContent=p.theme==='dark'?'☀':'◐';render(state.layout)}$('lang').onclick=()=>{const p=prefs();p.lang=p.lang==='ar'?'en':'ar';localStorage.setItem('mahaba:lang',p.lang);applyPrefs(p)};$('theme').onclick=()=>{const p=prefs();p.theme=p.theme==='dark'?'light':'dark';localStorage.setItem('mahaba:theme',p.theme);applyPrefs(p)};window.addEventListener('message',e=>{if(e.data?.type==='mahaba:preferences')applyPrefs(e.data)});applyPrefs();parent?.postMessage({type:'mahaba:nesting-ready'},'*');
 $('preset').onchange=()=>{const v=$('preset').value;if(v!=='custom'){const[w,h]=v.split('x').map(Number);$('sw').value=w;$('sh').value=h;render(state.layout)}};
@@ -24,7 +24,7 @@ async function run(){
   $('runBtn').disabled=true;$('bar').style.width='5%';$('gaStatus').textContent='GA: preparing population…';
   const template=prepareIrregularTemplate(state.template),settings=config();
   const availableSheets=[{name:'1000×690',width_mm:1000,height_mm:690},{name:'900×640',width_mm:900,height_mm:640},{name:'800×680',width_mm:800,height_mm:680},{name:'700×500',width_mm:700,height_mm:500},{name:'330×495',width_mm:330,height_mm:495}];
-  const worker=new Worker('./nest-worker-module.js?v=20261017-4',{type:'module'});
+  const worker=new Worker('./nest-worker-module.js?v=20261017-5',{type:'module'});
   state.worker=worker;
   worker.onmessage=event=>{
     const message=event.data||{};
