@@ -1,5 +1,6 @@
 import {boxDimensionGuides,dimensionGuidesSvg,dimensionViewportScale} from './dieline-dimensions.js?v=dimensions-1';
-import {DielineViewport} from './dieline-viewport.js?v=dieline-2';
+import {DielineViewport} from './dieline-viewport.js?v=transform-1';
+import {ArtworkTransform} from './artwork-transform.js?v=transform-1';
 
 const COPY={
   ar:{workspace:'مساحة العمل',template:'القالب الحالي',save:'حفظ المشروع',export:'تصدير',vector:'رسم متجهي',print:'طباعة 1:1',journey:'من الفكرة إلى الإنتاج',build:'بناء القالب',design:'التصميم والتشطيب',nest:'المونتاج',production:'الإنتاج',preview:'مساحة المعاينة',subtitle:'تفاصيل أوضح. وقرارات أسهل.',tools:'الأدوات',interactive:'معاينة تفاعلية',gesture:'اسحب للدوران · مرّر للتقريب',flatGesture:'الرسم المسطح · اسحب التصميم لضبط المحاذاة',loading:'نجهّز مساحة إبداعك',ready:'جاهز للمعاينة',error:'تعذّر تجهيز القالب',flat:'مسطّح',closed:'مطويّ',allFolds:'كل الطيات',body:'الجسم',bottom:'القاعدة',top:'الغطاء',fit:'توسيط المجسم · F',focus:'توسيع المعاينة',restore:'العودة لمساحة العمل · Esc',open:'فتح مشروع',close:'إغلاق لوحة الأدوات',views:{'3d':'ثلاثي الأبعاد','2d':'الرسم المسطح',split:'الرسم والمجسم'}},
@@ -37,9 +38,10 @@ export class StudioExperience{
     this.dimensionButton=document.getElementById('studioDimensions');this.showDimensions=true;
     this.panButton=document.getElementById('studioPan');
     document.querySelector('.atelier-canvas-tools').prepend(this.panButton);
-    this.flatViewport=new DielineViewport(studio,()=>this.drawDimensions());
+    this.flatViewport=new DielineViewport(studio,()=>{this.drawDimensions();this.artworkTransform?.sync();});
+    this.artworkTransform=new ArtworkTransform(studio,this.flatViewport);
     this.installBindings();this.wrapStudio();this.localize();this.syncView();
-    this.dimensionObserver=new ResizeObserver(()=>this.drawDimensions());
+    this.dimensionObserver=new ResizeObserver(()=>{this.drawDimensions();this.artworkTransform.sync();});
     this.dimensionObserver.observe(this.studio.$('flat'));
     if(this.mobile.matches)this.studio.setPane(null);else this.syncPanel();
   }
@@ -73,7 +75,21 @@ export class StudioExperience{
   }
   wrapStudio(){
     const drawFlat=this.studio.drawFlat.bind(this.studio);
-    this.studio.drawFlat=()=>{drawFlat();this.flatViewport.sync();this.drawDimensions();};
+    this.studio.drawFlat=()=>{
+      const controller=this.artworkTransform,existing=this.studio.$('flat').querySelector('svg');
+      if(existing&&controller.drag&&controller.current(controller.drag.context)){
+        const key=this.studio.$('drawing').value+':'+this.studio.$('side').value,baked=this.studio.baked.get(key),image=existing.querySelector('image');
+        if(image&&baked)image.setAttribute('href',baked.canvas.toDataURL());
+        controller.sync();return;
+      }
+      drawFlat();
+      const svg=this.studio.$('flat').querySelector('svg'),sheet=this.studio.sheets?.[Number(this.studio.$('drawing').value||0)];
+      if(svg&&sheet&&['image','foil','uv'].some(kind=>this.studio.layer()[kind])){
+        const padding=Math.max(sheet.width,sheet.height)*.16;
+        svg.setAttribute('viewBox',[-padding,-padding,sheet.width+padding*2,sheet.height+padding*2].join(' '));
+      }
+      this.flatViewport.sync();this.drawDimensions();this.artworkTransform.sync();
+    };
     const setPane=this.studio.setPane.bind(this.studio);
     this.studio.setPane=pane=>{
       const wasClosed=this.studio.root.hidden;
@@ -131,7 +147,9 @@ export class StudioExperience{
     const arabic=document.documentElement.lang!=='en';
     const panLabel=arabic?'تحريك الرسم · Alt + سحب لمحاذاة التصميم':'Pan drawing · Alt + drag to align artwork';
     this.panButton.setAttribute('aria-label',panLabel);this.panButton.title=panLabel;
-    this.setText(this.studio.root.querySelector('[data-panel="art"] .note'),arabic?'مرّر للتقريب واسحب لتحريك الرسم. لمحاذاة التصميم ألغِ أداة التحريك أو استخدم Alt + سحب. لكل جهة تصميم مستقل.':'Scroll to zoom and drag to pan. To align artwork, turn off the move tool or use Alt + drag. Each side has independent artwork.');
+    this.setText(this.studio.root.querySelector('[data-panel="art"] .note'),arabic?'اسحب زوايا الإطار لتحجيم الصورة، والمقبض العلوي للدوران. اسحب داخل الإطار للتحريك، وSpace + سحب لتحريك الرسم. لكل جهة تصميم مستقل.':'Drag frame corners to resize, the top handle to rotate, and inside the frame to move the image. Space + drag pans the drawing. Each side has independent artwork.');
+    this.setText(this.studio.root.querySelector('[data-panel="finishes"] .note'),arabic?'لكل قناع تحجيم ودوران مستقلان. اختر الفويل أو UV من شريط الرسم لتحريره. التشطيب للمعاينة البصرية.':'Each mask has independent size and rotation. Select Foil or UV in the drawing toolbar to edit it. Finishes are visual previews.');
+    this.artworkTransform?.sync();
     this.studio.$('flat').setAttribute('aria-label',arabic?'الرسم المسطح · اسكرول للتقريب · اسحب للتحريك · 0 للتوسيط':'Dieline · Scroll to zoom · Drag to pan · 0 to fit');
     if(mode==='2d')this.setText(document.querySelector('[data-experience="gesture"]'),this.flatViewport.panMode?(arabic?'اسحب للتحريك · مرّر للتقريب': 'Drag to pan · Scroll to zoom'):(arabic?'اسحب التصميم لمحاذاته · Space + سحب للتحريك':'Drag artwork to align · Space + drag to pan'));
   }

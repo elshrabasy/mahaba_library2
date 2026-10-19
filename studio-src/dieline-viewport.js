@@ -55,6 +55,8 @@ export class DielineViewport{
   updateCursor(){this.flat.dataset.panMode=String(this.panMode||!this.studio.layer()?.image);}
   onWheel(event){
     if(!this.active())return;
+    if(event.target?.closest('[data-artwork-toolbar]'))return;
+    if(this.studio.artworkTransform?.drag){event.preventDefault();return;}
     const matrix=this.svg.getScreenCTM();if(!matrix)return;
     event.preventDefault();event.stopPropagation();
     const anchor=transformPointer(matrix.inverse(),{x:event.clientX,y:event.clientY});
@@ -62,6 +64,10 @@ export class DielineViewport{
   }
   onPointerDown(event){
     if(!this.active()||![0,1].includes(event.button))return;
+    if(this.studio.artworkTransform?.drag)return;
+    if(event.target?.closest('[data-artwork-toolbar]'))return;
+    if(event.button===0&&!this.space&&event.target?.closest('[data-artwork-handle]'))return;
+    if(this.studio.artworkTransform&&event.button===0&&!this.space&&event.altKey)return;
     const pan=event.button===1||this.space||(!event.altKey&&(this.panMode||!this.studio.layer()?.image));
     if(!pan)return;
     const matrix=this.svg.getScreenCTM();if(!matrix)return;
@@ -84,6 +90,7 @@ export class DielineViewport{
   }
   onKey(event){
     if(!this.active()||event.ctrlKey||event.metaKey||event.altKey)return;
+    if(event.target?.closest('[data-artwork-toolbar]'))return;
     if(event.code==='Space'){this.space=true;event.preventDefault();return;}
     const bounds=this.flat.getBoundingClientRect();
     const step=40*Math.max(this.view.width/Math.max(1,bounds.width),this.view.height/Math.max(1,bounds.height));

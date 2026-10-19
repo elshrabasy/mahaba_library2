@@ -34,6 +34,10 @@ viewport.setPanMode(false);const artworkDrag=event({});viewport.onPointerDown(ar
 assert.equal(artworkDrag.intercepted,undefined,'Artwork tool must retain original drag behavior');
 const middle=event({button:1});viewport.onPointerDown(middle);assert.equal(middle.intercepted,true);viewport.endDrag();
 viewport.setPanMode(true);const alternate=event({altKey:true});viewport.onPointerDown(alternate);assert.equal(alternate.intercepted,undefined,'Alt-drag must remain available for artwork alignment');
+const handleTarget={closest:selector=>selector==='[data-artwork-handle]'?{}:null};
+const handle=event({target:handleTarget});viewport.onPointerDown(handle);assert.equal(handle.intercepted,undefined,'Image handles must take precedence over the pan tool');
+const handleMiddle=event({target:handleTarget,button:1});viewport.onPointerDown(handleMiddle);assert.equal(handleMiddle.intercepted,true);viewport.endDrag();
+const toolbar=event({target:{closest:selector=>selector==='[data-artwork-toolbar]'?{}:null}});viewport.onPointerDown(toolbar);assert.equal(toolbar.intercepted,undefined,'Toolbar actions must never start a canvas drag');
 viewport.onKey(event({key:'+',code:'Equal'}));assert.ok(viewport.view.width<preserved.width);
 const beforeArrow=viewport.view.x;viewport.onKey(event({key:'ArrowRight',code:'ArrowRight'}));assert.ok(viewport.view.x<beforeArrow);
 viewport.onKey(event({key:'0',code:'Digit0'}));assert.deepEqual(viewport.view,base);

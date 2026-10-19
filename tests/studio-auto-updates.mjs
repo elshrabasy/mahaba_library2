@@ -48,7 +48,10 @@ try{
   updates.scheduleDimensions(100000);studio.data={...studio.data,code:'EVC11001'};await updates.dimensions.flush();
   assert.equal(modelCalls.length,2,'Pending edits must not affect a different template');
   updates.scheduleArtwork();await updates.artwork.flush();assert.equal(layer.x,-15);assert.equal(artCalls,1);
-  updates.scheduleArtwork();studio.serial++;await updates.artwork.flush();assert.equal(artCalls,1,'Never apply a stale artwork snapshot after rebuilding geometry');
+  layer.foil='foil.png';studio.artworkKind='foil';updates.scheduleArtwork();studio.artworkKind='image';await updates.artwork.flush();
+  assert.equal(layer.effectTransforms.foil.angle,90,'Capture the selected image kind so delayed foil edits never move artwork');assert.equal(artCalls,2);
+  artworkFields.x.value='35';updates.scheduleArtwork();studio.cancelArtworkUpdate();await updates.artwork.flush();assert.equal(layer.x,-15,'A handle gesture must cancel stale numeric edits');
+  updates.scheduleArtwork();studio.serial++;await updates.artwork.flush();assert.equal(artCalls,2,'Never apply a stale artwork snapshot after rebuilding geometry');
   updates.cancel();
 }finally{
   if(saved)Object.defineProperty(globalThis,'document',saved);else delete globalThis.document;

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import {SharedStudio} from './shared-studio.js';
+import {SharedStudio} from './shared-studio.js?v=transform-1';
+import {drawPlacedImage,layerTransform,tintMaskPixels,normalizeMaskPixels} from './artwork-placement.js?v=transform-1';
 import {studioSheet} from '../engine/mahabat-adapter.js?v=dieline-2';
 
 // Mahabat Engineering Core is intentionally hidden behind the original Studio UX.
@@ -89,11 +90,42 @@ export class MahabatSharedStudio extends SharedStudio {
   }
 
   async makeEffectMask(image,w,h,drawPlaced){
-    if(!image)return null;const source=document.createElement('canvas'),sw=Math.min(512,image.naturalWidth||image.width),sh=Math.max(1,Math.round(sw*(image.naturalHeight||image.height)/(image.naturalWidth||image.width)));source.width=sw;source.height=sh;const sx=source.getContext('2d',{willReadFrequently:true});sx.drawImage(image,0,0,sw,sh);const sd=sx.getImageData(0,0,sw,sh).data;let transparent=0,total=sw*sh,borderLum=0,borderCount=0;for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){const i=(y*sw+x)*4,a=sd[i+3]/255;if(a<.92)transparent++;if(x<3||y<3||x>=sw-3||y>=sh-3){borderLum+=(sd[i]*.2126+sd[i+1]*.7152+sd[i+2]*.0722)/255;borderCount++;}}const useAlpha=transparent/total>.02,bg=borderCount?borderLum/borderCount:1,invert=!useAlpha&&bg>.55;const placed=document.createElement('canvas');placed.width=w;placed.height=h;const px=placed.getContext('2d',{willReadFrequently:true});drawPlaced(px,image);const pd=px.getImageData(0,0,w,h),d=pd.data;for(let i=0;i<d.length;i+=4){const a=d[i+3]/255,lum=(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722)/255;let mask=useAlpha?a:(invert?1-lum:lum);mask=Math.max(0,Math.min(1,(mask-.04)/.92));const v=Math.round(mask*255);d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}px.putImageData(pd,0,0);return placed;
+    if(!image)return null;
+    const source=document.createElement('canvas'),sourceWidth=Math.min(512,image.naturalWidth||image.width),sourceHeight=Math.max(1,Math.round(sourceWidth*(image.naturalHeight||image.height)/(image.naturalWidth||image.width)));
+    source.width=sourceWidth;source.height=sourceHeight;
+    const sourceContext=source.getContext('2d',{willReadFrequently:true});sourceContext.drawImage(image,0,0,sourceWidth,sourceHeight);
+    const pixels=sourceContext.getImageData(0,0,sourceWidth,sourceHeight).data;
+    let transparent=0,borderLuminance=0,borderCount=0;
+    for(let row=0;row<sourceHeight;row++)for(let column=0;column<sourceWidth;column++){
+      const index=(row*sourceWidth+column)*4;
+      if(pixels[index+3]/255<.92)transparent++;
+      if(column<3||row<3||column>=sourceWidth-3||row>=sourceHeight-3){borderLuminance+=(pixels[index]*.2126+pixels[index+1]*.7152+pixels[index+2]*.0722)/255;borderCount++;}
+    }
+    const useAlpha=transparent/(sourceWidth*sourceHeight)>.02,invert=!useAlpha&&(borderCount?borderLuminance/borderCount:1)>.55;
+    const placed=document.createElement('canvas');placed.width=w;placed.height=h;
+    const context=placed.getContext('2d',{willReadFrequently:true});drawPlaced(context,image);
+    const result=context.getImageData(0,0,w,h);normalizeMaskPixels(result.data,useAlpha,invert);context.putImageData(result,0,0);return placed;
   }
 
   async bake(s,d){
-    const images=await Promise.all(['image','foil','uv'].map(k=>this.image(s[k]))),result={},ratio=d.objRectWidth/d.objRectHeight,w=Math.round(ratio>=1?1536:1536*ratio),h=Math.round(ratio>=1?1536/ratio:1536);const drawPlaced=(ctx,im)=>{if(!im)return;const px=w/d.objRectWidth,k=Math.min(d.objRectWidth/(im.naturalWidth||im.width),d.objRectHeight/(im.naturalHeight||im.height))*px*s.scale/100;ctx.save();ctx.translate(w/2+s.x*px,h/2+s.y*px);ctx.rotate(s.angle*Math.PI/180);ctx.scale(k,k);ctx.drawImage(im,-(im.naturalWidth||im.width)/2,-(im.naturalHeight||im.height)/2,im.naturalWidth||im.width,im.naturalHeight||im.height);ctx.restore();};let artworkCanvas=null;if(images[0]){artworkCanvas=document.createElement('canvas');artworkCanvas.width=w;artworkCanvas.height=h;const ctx=artworkCanvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);drawPlaced(ctx,images[0]);const t=new THREE.CanvasTexture(artworkCanvas);t.channel=3;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result.map=t;}const foilCanvas=await this.makeEffectMask(images[1],w,h,drawPlaced),uvCanvas=await this.makeEffectMask(images[2],w,h,drawPlaced);for(const [key,canvas] of [['foil',foilCanvas],['uv',uvCanvas]])if(canvas){const t=new THREE.CanvasTexture(canvas);t.channel=3;t.colorSpace=THREE.NoColorSpace;t.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[key]=t;}const preview=document.createElement('canvas');preview.width=w;preview.height=h;const pc=preview.getContext('2d');if(artworkCanvas)pc.drawImage(artworkCanvas,0,0);if(foilCanvas){const tint=document.createElement('canvas');tint.width=w;tint.height=h;const tc=tint.getContext('2d');tc.fillStyle=s.foilColor||'#d7ad55';tc.fillRect(0,0,w,h);tc.globalCompositeOperation='destination-in';tc.drawImage(foilCanvas,0,0);pc.drawImage(tint,0,0);}result.canvas=preview;return result;
+    const images=await Promise.all(['image','foil','uv'].map(kind=>this.image(s[kind]))),result={};
+    const ratio=d.objRectWidth/d.objRectHeight,w=Math.round(ratio>=1?1536:1536*ratio),h=Math.round(ratio>=1?1536/ratio:1536);
+    const drawPlaced=kind=>(context,image)=>drawPlacedImage(context,image,d,{width:w,height:h},layerTransform(s,kind));
+    let artworkCanvas=null;
+    if(images[0]){
+      artworkCanvas=document.createElement('canvas');artworkCanvas.width=w;artworkCanvas.height=h;
+      const context=artworkCanvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,w,h);drawPlaced('image')(context,images[0]);
+      const texture=new THREE.CanvasTexture(artworkCanvas);texture.channel=3;texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result.map=texture;
+    }
+    const foilCanvas=await this.makeEffectMask(images[1],w,h,drawPlaced('foil')),uvCanvas=await this.makeEffectMask(images[2],w,h,drawPlaced('uv'));
+    for(const [key,canvas] of [['foil',foilCanvas],['uv',uvCanvas]])if(canvas){const texture=new THREE.CanvasTexture(canvas);texture.channel=3;texture.colorSpace=THREE.NoColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[key]=texture;}
+    const preview=document.createElement('canvas');preview.width=w;preview.height=h;const context=preview.getContext('2d');
+    if(artworkCanvas)context.drawImage(artworkCanvas,0,0);
+    if(foilCanvas){
+      const tint=document.createElement('canvas');tint.width=w;tint.height=h;const tintContext=tint.getContext('2d');tintContext.drawImage(foilCanvas,0,0);
+      const pixels=tintContext.getImageData(0,0,w,h);tintMaskPixels(pixels.data,s.foilColor||'#d7ad55');tintContext.putImageData(pixels,0,0);context.drawImage(tint,0,0);
+    }
+    result.canvas=preview;return result;
   }
 
   openNesting(){this.setPane(null);super.openNesting();const section=this.workspace.querySelector('.ms-nesting-workspace');if(!section.hidden)requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));}
