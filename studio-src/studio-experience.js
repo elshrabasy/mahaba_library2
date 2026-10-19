@@ -4,6 +4,7 @@ const COPY={
 };
 
 export function workflowStep(pane){
+  if(pane==='engineering')return 'production';
   if(['art','finishes','light'].includes(pane))return 'art';
   if(pane==='nest'||pane==='production')return pane;
   return 'dimensions';
@@ -37,8 +38,9 @@ export class StudioExperience{
   setText(element,text){if(element&&element.textContent!==text)element.textContent=text;}
   activatePane(pane){
     if(document.body.classList.contains('atelier-focused'))this.setFocus(false);
-    const button=this.studio.rail.querySelector(`[data-pane="${pane}"]`);
-    if(button&&this.studio.panel!==pane)button.click();
+    const actualPane=pane==='production'?'engineering':pane;
+    const button=this.studio.rail.querySelector(`[data-pane="${actualPane}"]`);
+    if(button&&this.studio.panel!==actualPane)button.click();
   }
   installBindings(){
     for(const button of document.querySelectorAll('[data-studio-step]'))button.addEventListener('click',()=>this.activatePane(button.dataset.studioStep));

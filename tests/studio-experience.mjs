@@ -4,6 +4,7 @@ import {StudioUIController} from '../studio-src/studio-ui-controller.js';
 
 for(const pane of ['art','finishes','light'])assert.equal(workflowStep(pane),'art');
 assert.equal(workflowStep('production'),'production');
+assert.equal(workflowStep('engineering'),'production');
 assert.equal(workflowStep('nest'),'nest');
 assert.equal(workflowStep('project'),'dimensions');
 assert.equal(workflowStep(null),'dimensions');
