@@ -14,6 +14,7 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - run: npm run test:ui
       - name: Check browser studio modules
         run: |
           node --check pilot/pilot.js
@@ -25,6 +26,7 @@ jobs:
           node --check studio-src/generator-experience.js
           node --check studio-src/studio-preferences.js
           node --check studio-src/studio-ui-controller.js
+          node --check studio-src/studio-experience.js
           node --check studio-src/shared-studio.js
           node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js

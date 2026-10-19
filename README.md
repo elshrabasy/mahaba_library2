@@ -22,6 +22,12 @@
 
 > Source repository remains untouched: `elshrabasy/library_mahaba`.
 
+## Studio experience
+
+The Studio v2 Atelier interface shares a visual system with Nesting Pro and supports Arabic/English, dark/light preferences, responsive tool sheets, keyboard focus containment, and reduced motion. `F` fits the preview; `Esc` closes a mobile tool sheet or exits focused preview. Export and project actions use the existing Studio methods. The initial model opens folded; subsequent parameter changes retain the chosen fold position.
+
+`studio-experience.js` coordinates presentation around the existing Studio. The UI controller temporarily disconnects its mutation observer during its own updates, reconnects in `finally`, and updates scene colors only when the theme changes. Run the targeted workflow/keyboard/observer regression with `npm run test:ui`; the main suite continues to check frozen EVC11001 geometry.
+
 ## Pair interlocking
 
 `studio-src/nest-pair-interlock.js` searches both 0°/180° pair orders using polygon vertex/edge contacts with clearance offsets. It retains area-, width-, and height-oriented pairs, repeats several cluster envelopes, and fills residual space with allowed single-piece rotations. If the compact contact shortlist cannot add a piece, residual fill searches the full generated contact set. Contact sampling uses contour features; acceptance always uses the full original polygon through `NestEngine.validate`, including clearance and the engine safety allowance.

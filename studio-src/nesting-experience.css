@@ -1,0 +1,87 @@
+html[data-nesting-design] {
+  --bg: #10191b;
+  --panel: #172325;
+  --line: #30413e;
+  --text: #edf1e9;
+  --muted: #a0b0aa;
+  --teal: #89dfbc;
+  --sheet: #152224;
+  --gold: #c9b387;
+  color-scheme: dark;
+}
+html[data-nesting-design][data-theme="light"] {
+  --bg: #f2f3ee;
+  --panel: #ffffff;
+  --line: #dce2da;
+  --text: #243a35;
+  --muted: #697d74;
+  --teal: #176b54;
+  --sheet: #ffffff;
+  --gold: #92774b;
+  color-scheme: light;
+}
+html[data-nesting-design] body { background: var(--bg); color: var(--text); font: 12px/1.7 "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif; }
+html[data-nesting-design] body .app { grid-template-columns: 320px minmax(0,1fr); }
+html[data-nesting-design] body .side { background: var(--panel); border-color: var(--line); padding: 22px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+html[data-nesting-design] body .brand { color: var(--muted); font-size: 9px; letter-spacing: 1.5px; }
+html[data-nesting-design] body .badge { font-size: 9px; border-color: var(--line); color: var(--teal); background: transparent; padding: 6px 10px; margin: 12px 0 6px; }
+html[data-nesting-design] body .side h2 { font-size: 26px; font-weight: 500; letter-spacing: -.7px; margin: 4px 0 8px; }
+html[data-nesting-design] body .sub,
+html[data-nesting-design] body .muted { color: var(--muted); font-size: 10px; line-height: 1.8; }
+html[data-nesting-design] body .section { border-color: var(--line); padding-top: 17px; margin-top: 17px; }
+html[data-nesting-design] body .section h3 { font-size: 11px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+html[data-nesting-design] body .grid { gap: 11px; }
+html[data-nesting-design] body .field span { color: var(--muted); font-size: 10px; }
+html[data-nesting-design] body .field input,
+html[data-nesting-design] body .field select { min-height: 39px; padding: 8px 10px; font: inherit; background: var(--bg); border-color: var(--line); color: var(--text); border-radius: 9px; }
+html[data-nesting-design] body .check { border-color: var(--line); background: var(--bg); padding: 11px; font-size: 10px; }
+html[data-nesting-design] body input[type="checkbox"] { accent-color: var(--teal); }
+html[data-nesting-design] body button { min-height: 37px; border-color: var(--line); background: var(--panel); color: var(--text); font: inherit; border-radius: 9px; }
+html[data-nesting-design] body button:focus-visible,
+html[data-nesting-design] body input:focus-visible,
+html[data-nesting-design] body select:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+html[data-nesting-design] body .primary { min-height: 45px; background: var(--teal); border-color: var(--teal); color: var(--bg); font-weight: 600; margin-top: 18px; }
+html[data-nesting-design] body .progress { height: 4px; margin-top: 14px; background: var(--line); }
+html[data-nesting-design] body .progress i { background: var(--teal); }
+html[data-nesting-design] body .status { font-size: 10px; color: var(--muted); }
+html[data-nesting-design] body .gaStatus { border-color: var(--line); background: transparent; color: var(--teal); font-size: 10px; padding: 11px; }
+html[data-nesting-design] body .stage { height: 88px; padding: 14px 22px; border-color: var(--line); background: var(--bg); }
+html[data-nesting-design] body .stats { gap: 10px; }
+html[data-nesting-design] body .stat { background: transparent; border: 0; border-inline-end: 1px solid var(--line); border-radius: 0; padding: 1px 14px; min-width: 90px; }
+html[data-nesting-design] body .stat b { font: 500 22px/1.4 "Segoe UI", sans-serif; color: var(--text); }
+html[data-nesting-design] body .stat span { font-size: 10px; color: var(--muted); }
+html[data-nesting-design] body .prefs { gap: 6px; }
+html[data-nesting-design] body .prefs button { min-width: 34px; padding: 6px 8px; color: var(--muted); background: transparent; }
+html[data-nesting-design] body .canvasWrap { height: calc(100dvh - 88px); padding: 16px 22px 22px; }
+html[data-nesting-design] body .canvas { background: var(--sheet); border-color: var(--line); border-radius: 16px; padding: 18px; }
+html[data-nesting-design] body .alts { margin-top: 15px; gap: 9px; }
+html[data-nesting-design] body .alt { padding: 12px; background: var(--bg); }
+html[data-nesting-design] body .alt.active { border-color: var(--teal); background: var(--panel); box-shadow: inset -3px 0 var(--teal); }
+html[data-nesting-design] body .alt .meta { font-size: 9px; margin-top: 7px; }
+html[data-nesting-design] body .legend { font-size: 10px; margin-top: 13px; }
+@media (max-width: 1100px) and (min-width: 761px) {
+  html[data-nesting-design] body .app { grid-template-columns: 280px minmax(0,1fr); }
+  html[data-nesting-design] body .side { padding: 17px; }
+  html[data-nesting-design] body .stage { padding: 12px; }
+  html[data-nesting-design] body .stat { min-width: 72px; padding: 0 8px; }
+}
+@media (max-width: 760px) {
+  html[data-nesting-design] body .app { display: flex; flex-direction: column; height: auto; }
+  html[data-nesting-design] body .side { padding: 18px 17px; border-bottom: 1px solid var(--line); }
+  html[data-nesting-design] body .side h2 { font-size: 23px; }
+  html[data-nesting-design] body .field input,
+  html[data-nesting-design] body .field select { min-height: 43px; font-size: 16px; }
+  html[data-nesting-design] body .primary { bottom: calc(8px + env(safe-area-inset-bottom)); min-height: 47px; box-shadow: 0 6px 20px #0002; }
+  html[data-nesting-design] body .stage { padding: 13px 10px; height: auto; gap: 7px; align-items: center; }
+  html[data-nesting-design] body .stats { gap: 0; flex: 1; justify-content: space-around; }
+  html[data-nesting-design] body .stat { min-width: 0; padding: 0 7px; }
+  html[data-nesting-design] body .stat b { font-size: 18px; }
+  html[data-nesting-design] body .stat span { font-size: 8px; }
+  html[data-nesting-design] body .prefs { flex-direction: column; gap: 3px; }
+  html[data-nesting-design] body .prefs button { min-height: 28px; height: 28px; padding: 2px 6px; font-size: 10px; }
+  html[data-nesting-design] body .canvasWrap { height: auto; padding: 11px; }
+  html[data-nesting-design] body .canvas { padding: 9px; border-radius: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nesting-design] body * { transition: none !important; animation: none !important; }
+}

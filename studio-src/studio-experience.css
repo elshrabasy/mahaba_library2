@@ -1,0 +1,265 @@
+html[data-studio-design],
+html[data-studio-design] .ms-layout {
+  --head-h: 82px;
+  --flow-h: 53px;
+  --rail-w: 82px;
+  --panel-w: 310px;
+  --gap: 16px;
+  --bg: #10191b;
+  --panel: #172325;
+  --line: #2c3b3d;
+  --text: #edf1e9;
+  --muted: #a0b0aa;
+  --teal: #89dfbc;
+  --gold: #c9b387;
+  --atelier-surface: #1c2a2c;
+  --atelier-input: #112022;
+  --atelier-stage: #152224;
+  --atelier-active: #263f37;
+  --atelier-shadow: 0 18px 50px #00000015;
+  color-scheme: dark;
+}
+html[data-studio-design][data-theme="light"],
+html[data-studio-design][data-theme="light"] .ms-layout {
+  --bg: #f2f3ee;
+  --panel: #ffffff;
+  --line: #dce2da;
+  --text: #243a35;
+  --muted: #697d74;
+  --teal: #176b54;
+  --gold: #92774b;
+  --atelier-surface: #f8faf5;
+  --atelier-input: #f5f7f2;
+  --atelier-stage: #e8eee6;
+  --atelier-active: #e2f0e5;
+  --atelier-shadow: 0 18px 50px #324e3610;
+  color-scheme: light;
+}
+html[data-studio-design] body {
+  font: 400 13px/1.6 "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+html[data-studio-design] button,
+html[data-studio-design] input,
+html[data-studio-design] select,
+html[data-studio-design] summary { font-family: inherit !important; }
+html[data-studio-design] button,
+html[data-studio-design] summary,
+html[data-studio-design] a { -webkit-tap-highlight-color: transparent; }
+html[data-studio-design] button:focus-visible,
+html[data-studio-design] summary:focus-visible,
+html[data-studio-design] a:focus-visible,
+html[data-studio-design] input:focus-visible,
+html[data-studio-design] select:focus-visible { outline: 2px solid var(--teal) !important; outline-offset: 4px; }
+html[data-studio-design] [hidden] { display: none !important; }
+html[data-studio-design] .mahaba-head {
+  height: var(--head-h) !important;
+  padding: 0 26px !important;
+  gap: 22px !important;
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--line) !important;
+  z-index: 200;
+}
+.atelier-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--teal); flex-shrink: 0; }
+.atelier-brand > svg { width: 36px; height: 39px; }
+html[data-studio-design] .mahaba-brand { font-size: 26px; font-weight: 600; line-height: 1.2; letter-spacing: -.7px; color: var(--text) !important; }
+html[data-studio-design] .mahaba-brand small { display: block; font-size: 8px; letter-spacing: 2.1px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+.atelier-divider { height: 30px; width: 1px; background: var(--line); }
+.atelier-project { min-width: 0; }
+.atelier-project > span { font-size: 10px; color: var(--muted); }
+html[data-studio-design] .mahaba-project { font-size: 12px; max-width: 195px; color: var(--text); margin-top: 2px; }
+html[data-studio-design] .mahaba-template-switch { border: 0; border-radius: 0; padding: 0; background: transparent !important; gap: 9px; }
+html[data-studio-design] .mahaba-template-switch label { font-size: 10px; color: var(--muted); }
+html[data-studio-design] .mahaba-template-switch select { min-width: 160px; width: 185px; height: 39px; padding: 0 10px; background: var(--panel) !important; border: 1px solid var(--line) !important; color: var(--text) !important; font-size: 11px; border-radius: 9px; }
+html[data-studio-design] .mahaba-core-badge { display: none; }
+.atelier-head-actions { display: flex; gap: 8px; align-items: center; }
+.atelier-head-actions button,
+.atelier-export > summary { min-height: 39px; border-radius: 9px; padding: 8px 12px; border: 1px solid var(--line); color: var(--text); background: var(--panel); cursor: pointer; font-size: 11px; white-space: nowrap; }
+.atelier-head-actions svg { width: 17px; height: 17px; vertical-align: middle; }
+.atelier-head-actions .atelier-save { display: inline-flex; align-items: center; gap: 8px; background: var(--teal); border-color: var(--teal); color: var(--bg); font-weight: 600; }
+html[data-studio-design] .mahaba-back { min-height: 39px; padding: 8px 6px !important; font-size: 10px !important; color: var(--muted) !important; background: transparent !important; border-color: transparent !important; }
+html[data-studio-design] .mahaba-prefs { gap: 4px; margin-inline-start: 0; }
+html[data-studio-design] .mahaba-prefs button { height: 34px; padding: 0 7px; min-width: 32px; border-color: transparent !important; background: transparent !important; color: var(--muted) !important; font-size: 11px; }
+.atelier-export { position: relative; }
+.atelier-export > summary { list-style: none; display: flex; align-items: center; gap: 7px; }
+.atelier-export > summary::-webkit-details-marker { display: none; }
+.atelier-export-options { position: absolute; inset-inline-end: 0; top: 48px; padding: 7px; width: 205px; background: var(--panel); border: 1px solid var(--line); border-radius: 13px; box-shadow: 0 20px 50px #0003; z-index: 400; }
+.atelier-export-options button { display: flex; gap: 16px; width: 100%; text-align: start; border: 0; background: transparent; }
+.atelier-export-options button span { color: var(--muted); font-size: 10px; }
+.atelier-export-options button:hover { background: var(--atelier-active); }
+.atelier-flow { height: var(--flow-h); display: flex; align-items: center; gap: 14px; padding: 0 27px; border-bottom: 1px solid var(--line); }
+.atelier-flow-caption { font-size: 11px; color: var(--muted); margin-inline-end: 22px; }
+.atelier-flow > button { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); background: transparent; border: 0; font-size: 11px; cursor: pointer; padding: 7px 0; }
+.atelier-flow > button b { font: 500 10px/1 "Segoe UI", sans-serif; color: var(--muted); border: 1px solid var(--line); border-radius: 50%; padding: 6px; }
+.atelier-flow > button[aria-current="step"] { color: var(--text); }
+.atelier-flow > button[aria-current="step"] b { color: var(--teal); border-color: var(--teal); background: var(--atelier-active); }
+.atelier-flow > i { display: block; width: 26px; height: 1px; background: var(--line); }
+.atelier-ready { margin-inline-start: auto; font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.atelier-ready > i,
+.atelier-live-dot { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; display: inline-block; }
+html[data-studio-design] .ms-layout { height: calc(100dvh - var(--head-h) - var(--flow-h)); grid-template-columns: var(--rail-w) var(--panel-w) minmax(0,1fr) !important; gap: var(--gap) !important; padding: 19px 22px 14px !important; background: transparent !important; color: var(--text); }
+html[data-studio-design] .ms-layout.inspector-closed { grid-template-columns: var(--rail-w) minmax(0,1fr) !important; }
+html[data-studio-design] .ms-layout #studioRail { width: var(--rail-w) !important; border: 0; border-radius: 0 !important; background: transparent !important; padding: 0 !important; gap: 9px; }
+html[data-studio-design] .ms-layout #studioRail button { min-height: 65px !important; gap: 7px !important; padding: 9px 3px !important; font-size: 10px !important; color: var(--muted); border-radius: 13px !important; transition: color .18s, background .18s; }
+html[data-studio-design] .ms-layout #studioRail button svg { width: 21px !important; height: 21px !important; stroke-width: 1.5; }
+html[data-studio-design] .ms-layout #studioRail button.active { color: var(--teal) !important; background: var(--atelier-active) !important; box-shadow: none; }
+html[data-studio-design] .ms-layout #studioRail button:hover { color: var(--text); background: var(--atelier-surface); }
+html[data-studio-design] .ms-layout #studioInspector { width: var(--panel-w) !important; height: 100% !important; top: 0 !important; border: 1px solid var(--line); border-radius: 17px !important; background: var(--panel) !important; box-shadow: var(--atelier-shadow); scrollbar-width: thin; scrollbar-color: var(--line) transparent; animation: atelier-panel-in .2s ease-out; }
+html[data-studio-design] .ms-layout .inspector-heading { padding: 22px 21px 17px !important; border-bottom: 1px solid var(--line); background: var(--panel) !important; }
+html[data-studio-design] .ms-layout .inspector-heading small { font-size: 10px; color: var(--muted); }
+html[data-studio-design] .ms-layout .inspector-heading h2 { font-size: 20px; font-weight: 500; color: var(--text); margin: 4px 0 0; letter-spacing: -.5px; }
+html[data-studio-design] .ms-layout .inspector-heading button { background: transparent; border-color: transparent; color: var(--muted); width: 34px; height: 34px; padding: 7px !important; }
+html[data-studio-design] .ms-layout aside .pro-section { padding: 18px 21px !important; }
+html[data-studio-design] .ms-layout aside h2 { font-size: 12px; color: var(--text); font-weight: 500; }
+html[data-studio-design] .ms-layout aside .field { margin: 13px 0 !important; gap: 7px !important; }
+html[data-studio-design] .ms-layout aside .field label,
+html[data-studio-design] .ms-layout .pro-label { color: var(--muted); font-size: 11px; }
+html[data-studio-design] .ms-layout input[type="number"],
+html[data-studio-design] .ms-layout select { min-height: 39px !important; width: 100%; max-width: none; background: var(--atelier-input); border: 1px solid var(--line); color: var(--text); border-radius: 8px !important; font-size: 12px !important; padding: 8px 10px !important; }
+html[data-studio-design] .ms-layout [data-id="dimensions"] > .field { flex-direction: row; align-items: center; justify-content: space-between; font-size: 12px; }
+html[data-studio-design] .ms-layout [data-id="dimensions"] > .field input { width: 112px; max-width: 48%; }
+html[data-studio-design] .ms-layout option { color: var(--text); background: var(--panel); }
+html[data-studio-design] .ms-layout input[type="range"] { accent-color: var(--teal); cursor: pointer; }
+html[data-studio-design] .ms-layout button,
+html[data-studio-design] .ms-layout .upload { min-height: 36px; padding: 9px 11px !important; font-size: 11px !important; border-radius: 9px !important; color: var(--text); background: var(--atelier-surface); border-color: var(--line); cursor: pointer; }
+html[data-studio-design] .ms-layout button.primary { background: var(--teal); border-color: var(--teal); color: var(--bg); }
+html[data-studio-design] .ms-layout button:disabled { opacity: .45; cursor: wait; }
+html[data-studio-design] .ms-layout .note,
+html[data-studio-design] .ms-layout .pro-small { color: var(--muted); font-size: 10px !important; line-height: 1.9 !important; }
+html[data-studio-design] .ms-layout .note { border: 1px solid var(--line); background: var(--atelier-input); padding: 12px; }
+html[data-studio-design] .ms-layout .workspace { display: flex !important; flex-direction: column !important; gap: 0; min-width: 0; min-height: 0 !important; height: 100% !important; }
+.atelier-workspace-heading { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 18px; flex-shrink: 0; }
+.atelier-eyebrow { font: 500 8px/1.5 "Segoe UI", sans-serif; letter-spacing: 2px; color: var(--gold); }
+.atelier-workspace-heading h1 { margin: 4px 0; font-size: 24px; line-height: 1.4; font-weight: 500; letter-spacing: -.7px; }
+.atelier-workspace-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+html[data-studio-design] .ms-layout .atelier-panel-toggle { display: flex; gap: 7px; align-items: center; font-size: 10px !important; background: transparent; }
+.atelier-panel-toggle svg { width: 17px; height: 17px; }
+html[data-studio-design] .ms-layout .workspace > .atelier-viewbar { display: flex !important; flex-shrink: 0; min-height: 48px !important; padding: 0 2px 11px !important; margin: 0 !important; overflow: visible !important; justify-content: space-between; align-items: center; }
+.atelier-view-tabs { display: flex; gap: 3px; padding: 4px; border: 1px solid var(--line); background: var(--panel); border-radius: 11px; }
+html[data-studio-design] .ms-layout .atelier-view-tabs button { min-height: 31px; border: 0; background: transparent; color: var(--muted); padding: 6px 14px !important; font-size: 10px !important; border-radius: 7px !important; }
+html[data-studio-design] .ms-layout .atelier-view-tabs button.active { background: var(--atelier-active); color: var(--teal); box-shadow: 0 2px 5px #00000008; font-weight: 500; }
+.atelier-view-note { color: var(--muted); font-size: 9px; margin-inline-end: 3px; }
+html[data-studio-design] .ms-layout .workspace > .view { flex: 1 1 auto !important; position: relative; min-height: 120px !important; height: auto !important; display: flex; border: 1px solid var(--line) !important; border-radius: 17px !important; background: var(--atelier-stage) !important; box-shadow: var(--atelier-shadow); }
+html[data-studio-design] .ms-layout .view.split { display: grid !important; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0,1fr); }
+html[data-studio-design] #canvas3d { min-height: 0; flex: 1 1 auto; width: 100%; height: 100%; }
+html[data-studio-design] #canvas3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; }
+html[data-studio-design] .ms-flat { width: 100%; height: 100%; min-height: 0; overflow: auto; background-color: var(--atelier-stage); background-image: radial-gradient(var(--line) .75px, transparent .75px); background-size: 18px 18px; }
+html[data-studio-design] .ms-flat > svg { width: 100%; height: 100%; display: block; }
+html[data-studio-design] .view.split .ms-flat { border-inline-start: 1px solid var(--line); }
+.atelier-canvas-label { position: absolute; top: 17px; inset-inline-start: 18px; display: flex; align-items: center; gap: 8px; z-index: 8; pointer-events: none; color: var(--muted); font-size: 10px; }
+.atelier-canvas-tools { position: absolute; top: 13px; inset-inline-end: 14px; display: flex; gap: 5px; z-index: 9; }
+html[data-studio-design] .ms-layout .atelier-canvas-tools button { width: 34px; height: 34px; min-height: 0; padding: 8px !important; background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 8px !important; }
+.atelier-canvas-tools svg { width: 16px; height: 16px; display: block; }
+.atelier-gesture { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); pointer-events: none; white-space: nowrap; font-size: 9px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 6px 13px; opacity: .86; }
+.atelier-gesture span { margin: 0 9px; color: var(--gold); }
+.atelier-settings-row { display: flex; align-items: stretch; gap: 9px; margin-top: 10px; flex-shrink: 0; }
+html[data-studio-design] .ms-layout .panel-toolbar,
+html[data-studio-design] .ms-layout .ms-fold-controls { display: flex !important; flex: 1 1 0; align-items: center; gap: 8px !important; min-width: 0; padding: 8px 11px !important; margin: 0 !important; background: var(--panel) !important; border: 1px solid var(--line) !important; border-radius: 11px !important; font-size: 10px !important; }
+html[data-studio-design] .ms-layout .panel-toolbar label { display: flex; gap: 6px; align-items: center; color: var(--muted); white-space: nowrap; }
+html[data-studio-design] .ms-layout .panel-toolbar select,
+html[data-studio-design] .ms-layout .ms-fold-controls select { width: auto !important; min-height: 30px !important; height: 30px; padding: 3px 7px !important; max-width: 120px !important; font-size: 10px !important; }
+html[data-studio-design] .ms-layout .panel-toolbar [data-id="coverage"] { display: none; }
+html[data-studio-design] .ms-layout .ms-fold-controls button { min-height: 30px; padding: 3px 7px !important; background: transparent; border-color: transparent; white-space: nowrap; font-size: 9px !important; }
+html[data-studio-design] .ms-layout .ms-fold-controls input { min-width: 48px !important; flex: 1; width: 100%; }
+.atelier-statusbar { display: flex; align-items: center; gap: 16px; padding: 10px 2px 0; flex-shrink: 0; min-height: 30px; }
+.atelier-dimensions { font: 10px/1.5 "Segoe UI", sans-serif; letter-spacing: .4px; color: var(--muted); direction: ltr; white-space: nowrap; }
+html[data-studio-design] .ms-layout #modelStatus { font-size: 9px !important; min-height: 0 !important; margin: 0; padding: 0 !important; color: var(--muted) !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+.atelier-units { margin-inline-start: auto; font: 10px/1 "Segoe UI", sans-serif; color: var(--gold); }
+html[data-studio-design] .mgx-card,
+html[data-studio-design] .mgx-panel-card { background: var(--atelier-surface) !important; border-color: var(--line) !important; border-radius: 12px; box-shadow: none; }
+html[data-studio-design] .mgx-title { color: var(--text) !important; font-size: 11px; }
+html[data-studio-design] .mgx-live { color: var(--muted); font-size: 9px; }
+html[data-studio-design] .mgx-stat,
+html[data-studio-design] .mgx-panel-metric { background: var(--atelier-input) !important; border-color: var(--line) !important; }
+html[data-studio-design] .mgx-stat b,
+html[data-studio-design] .mgx-panel-metric span { color: var(--text) !important; font-size: 11px; }
+html[data-studio-design] .mahaba-check-summary { background: transparent; border-color: var(--line); color: var(--gold); font-size: 10px; }
+html[data-studio-design] .ms-layout .ms-nesting-workspace { position: fixed !important; inset: calc(var(--head-h) + var(--flow-h)) 0 0 !important; z-index: 600 !important; display: flex !important; flex-direction: column; border-radius: 0 !important; background: var(--bg) !important; }
+html[data-studio-design] .ms-layout .ms-nesting-workspace > .toolbar { min-height: 54px !important; height: 54px !important; flex: 0 0 54px !important; padding: 9px 22px !important; border-bottom: 1px solid var(--line) !important; background: var(--panel) !important; color: var(--text) !important; }
+html[data-studio-design] .ms-layout .ms-nesting-workspace > .toolbar button { color: var(--text) !important; background: var(--atelier-surface) !important; border-color: var(--line) !important; }
+html[data-studio-design] .ms-layout .ms-nest { height: 100% !important; width: 100% !important; flex: 1 1 0 !important; min-height: 0 !important; border: 0; }
+html[data-studio-design] body.atelier-focused .ms-layout { grid-template-columns: minmax(0,1fr) !important; }
+html[data-studio-design] body.atelier-focused #studioRail,
+html[data-studio-design] body.atelier-focused #studioInspector { display: none !important; }
+html[data-studio-design] body.atelier-focused .atelier-workspace-heading { display: none; }
+html[data-studio-design] .atelier-backdrop { display: none; }
+@keyframes atelier-panel-in { from { opacity: .65; transform: translateX(7px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 1250px) {
+  html[data-studio-design], html[data-studio-design] .ms-layout { --panel-w: 276px; --gap: 12px; }
+  .atelier-project, .atelier-divider, .atelier-view-note { display: none; }
+  html[data-studio-design] .mahaba-head { gap: 16px !important; padding: 0 20px !important; }
+  .atelier-flow-caption { margin-inline-end: 10px; }
+  .atelier-settings-row { flex-wrap: wrap; }
+  html[data-studio-design] .ms-layout .panel-toolbar { flex-basis: 100%; }
+  .atelier-workspace-heading { margin-bottom: 12px; }
+  .atelier-workspace-heading h1 { font-size: 22px; }
+}
+@media (max-width: 1050px) {
+  html[data-studio-design] .mahaba-template-switch label,
+  html[data-studio-design] .atelier-head-actions .mahaba-back,
+  html[data-studio-design] #headerOpen { display: none; }
+  html[data-studio-design] .mahaba-template-switch select { width: 165px; }
+}
+@media (max-width: 760px) {
+  html[data-studio-design], html[data-studio-design] .ms-layout { --head-h: 110px; --flow-h: 0px; --mobile-rail: 72px; }
+  html[data-studio-design] .mahaba-head { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 54px 42px; gap: 2px 10px !important; align-content: center; padding: 0 13px !important; }
+  .atelier-brand { gap: 9px; }
+  .atelier-brand > svg { width: 26px; height: 30px; }
+  html[data-studio-design] .mahaba-brand { font-size: 22px; max-width: none; }
+  html[data-studio-design] .mahaba-brand small { display: block !important; font-size: 6px; letter-spacing: 1.3px; margin-top: 4px; }
+  .atelier-head-actions { grid-column: 2; grid-row: 1; gap: 6px; }
+  .atelier-head-actions .atelier-save { min-height: 34px; padding: 7px 8px; }
+  .atelier-save > span, #headerOpen, .atelier-head-actions .mahaba-back { display: none; }
+  .atelier-export > summary { min-height: 34px; padding: 6px 8px; font-size: 10px; }
+  html[data-studio-design] .mahaba-prefs { position: absolute; inset-inline-end: 13px; bottom: 10px; }
+  html[data-studio-design] .mahaba-template-switch { grid-row: 2; grid-column: 1 / -1; margin: 0; justify-content: flex-start; }
+  html[data-studio-design] .mahaba-template-switch label { display: inline !important; font-size: 10px; }
+  html[data-studio-design] .mahaba-template-switch select { width: 170px; min-width: 0; height: 34px; font-size: 10px; }
+  .atelier-flow { display: none; }
+  html[data-studio-design] .ms-layout { display: block !important; height: calc(100dvh - var(--head-h)) !important; padding: 12px 12px calc(var(--mobile-rail) + 19px + env(safe-area-inset-bottom)) !important; }
+  html[data-studio-design] .ms-layout #studioRail { position: fixed !important; top: auto !important; bottom: max(8px,env(safe-area-inset-bottom)) !important; left: 10px !important; right: 10px !important; width: auto !important; height: var(--mobile-rail) !important; display: flex !important; flex-direction: row !important; gap: 3px !important; padding: 6px !important; background: var(--panel) !important; border: 1px solid var(--line); border-radius: 16px !important; overflow-x: auto !important; overflow-y: hidden !important; box-shadow: var(--atelier-shadow); z-index: 500 !important; scroll-snap-type: x proximity; }
+  html[data-studio-design] .ms-layout #studioRail button { flex: 1 0 62px !important; min-width: 62px !important; height: 58px !important; min-height: 58px !important; padding: 7px 3px !important; font-size: 9px !important; gap: 5px !important; scroll-snap-align: center; }
+  html[data-studio-design] .ms-layout #studioRail button svg { width: 19px !important; height: 19px !important; }
+  html[data-studio-design] .ms-layout #studioInspector { position: fixed !important; top: auto !important; bottom: calc(var(--mobile-rail) + 18px + env(safe-area-inset-bottom)) !important; right: 10px !important; left: 10px !important; width: auto !important; height: auto !important; max-height: min(68dvh,600px) !important; border-radius: 20px !important; z-index: 480 !important; backdrop-filter: none; box-shadow: 0 -20px 70px #0004; }
+  html[data-studio-design] .ms-layout .inspector-heading { position: sticky; top: 0; z-index: 5; padding: 18px 19px 12px !important; border-radius: 20px 20px 0 0; }
+  html[data-studio-design] .ms-layout .inspector-heading::before { content: ""; width: 28px; height: 3px; border-radius: 5px; background: var(--line); position: absolute; top: 8px; left: calc(50% - 14px); }
+  html[data-studio-design] .ms-layout .inspector-heading h2 { font-size: 19px; }
+  html[data-studio-design] .ms-layout aside .pro-section { padding: 15px 19px !important; }
+  html[data-studio-design] .ms-layout input[type="number"], html[data-studio-design] .ms-layout select { min-height: 42px !important; font-size: 16px !important; }
+  html[data-studio-design] .ms-layout .atelier-backdrop:not([hidden]) { display: block; position: fixed; inset: var(--head-h) 0 0; border: 0; background: #0007; border-radius: 0 !important; z-index: 470; }
+  .atelier-workspace-heading { margin: 0 1px 12px; }
+  .atelier-workspace-heading h1 { font-size: 21px; margin: 2px 0; }
+  .atelier-workspace-heading p { font-size: 10px; }
+  .atelier-eyebrow { font-size: 7px; }
+  html[data-studio-design] .ms-layout .atelier-view-tabs button { padding: 6px 10px !important; font-size: 10px !important; }
+  html[data-studio-design] .ms-layout .workspace > .atelier-viewbar { min-height: 45px !important; padding-bottom: 9px !important; }
+  html[data-studio-design] .ms-layout .workspace > .view { min-height: 140px !important; border-radius: 14px !important; }
+  html[data-studio-design] .ms-layout .view.split { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  html[data-studio-design] .view.split .ms-flat { border-inline-start: 0; border-top: 1px solid var(--line); }
+  .atelier-canvas-label { top: 14px; inset-inline-start: 13px; font-size: 9px; }
+  .atelier-canvas-tools { top: 10px; inset-inline-end: 11px; }
+  .atelier-gesture { bottom: 12px; font-size: 8px; padding: 5px 10px; }
+  .atelier-settings-row { margin-top: 8px; gap: 7px; }
+  html[data-studio-design] .ms-layout .panel-toolbar, html[data-studio-design] .ms-layout .ms-fold-controls { padding: 6px 9px !important; }
+  html[data-studio-design] .ms-layout .panel-toolbar select, html[data-studio-design] .ms-layout .ms-fold-controls select { min-height: 30px !important; font-size: 10px !important; }
+  html[data-studio-design] .ms-layout .ms-fold-controls select { max-width: 90px !important; }
+  .atelier-statusbar { gap: 8px; padding-top: 8px; }
+  .atelier-dimensions { font-size: 9px; }
+  html[data-studio-design] .ms-layout #modelStatus { font-size: 8px !important; }
+  .atelier-units { display: none; }
+  html[data-studio-design] .ms-layout .ms-nesting-workspace { inset: var(--head-h) 0 0 !important; }
+  html[data-studio-design] .ms-layout .ms-nesting-workspace > .toolbar { padding: 8px 12px !important; }
+}
+@media (max-height: 740px) and (min-width: 761px) {
+  .atelier-workspace-heading p { display: none; }
+  .atelier-workspace-heading { margin-bottom: 10px; }
+  html[data-studio-design] .ms-layout #studioRail { gap: 4px; }
+  html[data-studio-design] .ms-layout #studioRail button { min-height: 57px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-studio-design] *, html[data-studio-design] *::before, html[data-studio-design] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+html[data-studio-design] body [hidden][hidden][hidden],
+html[data-studio-design] .ms-layout #studioInspector[hidden],
+html[data-studio-design] .ms-layout #studioRail[hidden] { display: none !important; }
