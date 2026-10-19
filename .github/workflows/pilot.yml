@@ -27,6 +27,7 @@ jobs:
           node --check studio-src/studio-preferences.js
           node --check studio-src/studio-ui-controller.js
           node --check studio-src/studio-experience.js
+          node --check studio-src/dieline-dimensions.js
           node --check studio-src/shared-studio.js
           node --check studio-src/studio-core.js
           node --check studio-src/native_runtime.js
