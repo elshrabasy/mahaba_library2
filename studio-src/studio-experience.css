@@ -167,6 +167,8 @@ html[data-studio-design] .ms-layout .atelier-canvas-tools #studioPan[aria-presse
 .atelier-gesture { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); pointer-events: none; white-space: nowrap; font-size: 9px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 6px 13px; opacity: .86; }
 .atelier-gesture span { margin: 0 9px; color: var(--gold); }
 .atelier-settings-row { display: flex; align-items: stretch; gap: 9px; margin-top: 10px; flex-shrink: 0; }
+.mahaba-auto-note { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; margin: 0 0 14px; }
+.mahaba-auto-note::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
 html[data-studio-design] .ms-layout .panel-toolbar,
 html[data-studio-design] .ms-layout .ms-fold-controls { display: flex !important; flex: 1 1 0; align-items: center; gap: 8px !important; min-width: 0; padding: 8px 11px !important; margin: 0 !important; background: var(--panel) !important; border: 1px solid var(--line) !important; border-radius: 11px !important; font-size: 10px !important; }
 html[data-studio-design] .ms-layout .panel-toolbar label { display: flex; gap: 6px; align-items: center; color: var(--muted); white-space: nowrap; }

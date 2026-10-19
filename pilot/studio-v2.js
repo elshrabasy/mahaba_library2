@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative,listMahabatTemplates} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=dieline-2';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=auto-1';
 import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261015-1';
 import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-1';
-import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-2';
-import {StudioUIController} from '../studio-src/studio-ui-controller.js?v=atelier-1';
+import {GeneratorExperience} from '../studio-src/generator-experience.js?v=auto-1';
+import {StudioUIController} from '../studio-src/studio-ui-controller.js?v=auto-1';
+import {StudioAutoUpdates} from '../studio-src/studio-auto-updates.js?v=auto-1';
 import {StudioExperience,fitCameraDistance} from '../studio-src/studio-experience.js?v=dieline-2';
 
 globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting-pro.html?v=atelier-1'};
@@ -52,6 +53,7 @@ let engineeringPanel=null,productionLink=null,generatorExperience=null,uiControl
 const viewer={host,renderer,scene,camera,controls,floor,slider,status,catalog:listMahabatTemplates(),currentCode:'EVC11001',model:null,async load(code,_variant='',parameters=null){try{const resolved=normalizeCode(code);status.textContent='جارٍ بناء القالب داخل Mahabat Studio…';const base=paramsByCode.get(resolved)||{...(PRESETS[resolved]?.params||{})};const next=parameters?{...base,...parameters}:{...base};paramsByCode.set(resolved,next);currentCode=resolved;data=generateMahabatNative(resolved,next);disposeRenderAssets();textureCache.clear();const mats=await buildMaterials(data);materials=Object.values(mats);model=buildNativeModel(data,mats,{gpu:false});viewer.model=model;viewer.currentCode=resolved;scene.add(model.root);slider.value='0';setNativeTime(model,0);setHeader(resolved);updateUrl(resolved);fit();await studio.bind(data,model);productionLink?.sync();engineeringPanel?.refresh(data);generatorExperience?.refresh(data,model);uiController?.apply(false);const confidence=data.engineeringModel?.validation?.production_confidence??data.validation?.production_confidence;const confidenceText=Number.isFinite(confidence)?` · Confidence ${confidence}%`:'';status.textContent=`${data.code} · ${data.materialInfo.name} · ${model.meshes.length} panels · Mahabat Studio${confidenceText}`;return true;}catch(e){status.textContent='خطأ: '+(e.userMessage||e.message);console.error(e);return false;}},seek(v,refit=false){if(!model||!data)return;setNativeTime(model,data.duration*Math.max(0,Math.min(1,v)));slider.value=Math.round(v*1000);if(refit)fit();},placeLights(force=false){const mode=studio?.$('sceneMode')?.value||'free',preset=studio?.$('lightPreset')?.value||'soft',a=THREE.MathUtils.degToRad(+(studio?.$('lightAngle')?.value||0));floor.visible=mode==='studio';key.intensity=preset==='contrast'?4:preset==='even'?2.2:2.6;fill.intensity=preset==='contrast'?.7:preset==='even'?1.8:1.15;key.position.set(Math.cos(a)*2,2,Math.sin(a)*2+1.5);if(force)fit();}};
 const studio=new MahabatSharedStudio(viewer);viewer.studio=studio;uiController=new StudioUIController(studio,viewer,{applySceneTheme});engineeringPanel=new EngineeringStudioPanel(studio,viewer);productionLink=new StudioProductionLink(studio,engineeringPanel);generatorExperience=new GeneratorExperience(viewer,studio);uiController.apply(false);
 viewer.fit=fit;
+new StudioAutoUpdates(studio);
 new StudioExperience(studio,viewer,uiController);
 slider.oninput=()=>viewer.seek(+slider.value/1000,false);slider.onchange=fit;document.getElementById('foldFlat').onclick=()=>viewer.seek(0,true);document.getElementById('foldClosed').onclick=()=>viewer.seek(1,true);document.getElementById('back').onclick=()=>location.href='../';
 if(templateSwitch)templateSwitch.onchange=async()=>{const code=normalizeCode(templateSwitch.value);await viewer.load(code,'',paramsByCode.get(code)||PRESETS[code].params);};

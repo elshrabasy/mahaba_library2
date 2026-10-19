@@ -27,6 +27,7 @@ jobs:
           node --check studio-src/studio-preferences.js
           node --check studio-src/studio-ui-controller.js
           node --check studio-src/studio-experience.js
+          node --check studio-src/studio-auto-updates.js
           node --check studio-src/dieline-dimensions.js
           node --check studio-src/dieline-viewport.js
           node --check core/geometry/path-points.js
