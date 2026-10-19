@@ -2,12 +2,12 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative,listMahabatTemplates} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=atelier-2';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=dieline-2';
 import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261015-1';
 import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-1';
 import {GeneratorExperience} from '../studio-src/generator-experience.js?v=20261015-2';
 import {StudioUIController} from '../studio-src/studio-ui-controller.js?v=atelier-1';
-import {StudioExperience,fitCameraDistance} from '../studio-src/studio-experience.js?v=dimensions-1';
+import {StudioExperience,fitCameraDistance} from '../studio-src/studio-experience.js?v=dieline-2';
 
 globalThis.MAHABAT_STUDIO_ASSETS={'./assets/studio/nesting.html':'../studio-src/nesting-pro.html?v=atelier-1'};
 const first=(o,p)=>Object.entries(o||{}).find(([k,v])=>k.startsWith(p)&&v?.length)?.[1];
