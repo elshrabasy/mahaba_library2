@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {SharedStudio} from './shared-studio.js?v=transform-1';
 import {drawPlacedImage,layerTransform,tintMaskPixels,normalizeMaskPixels} from './artwork-placement.js?v=transform-1';
+import {orientSheetTexture} from './sheet-texture.js?v=registration-1';
 import {studioSheet} from '../engine/mahabat-adapter.js?v=dieline-2';
 
 // Mahabat Engineering Core is intentionally hidden behind the original Studio UX.
@@ -115,10 +116,10 @@ export class MahabatSharedStudio extends SharedStudio {
     if(images[0]){
       artworkCanvas=document.createElement('canvas');artworkCanvas.width=w;artworkCanvas.height=h;
       const context=artworkCanvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,w,h);drawPlaced('image')(context,images[0]);
-      const texture=new THREE.CanvasTexture(artworkCanvas);texture.channel=3;texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result.map=texture;
+      const texture=orientSheetTexture(new THREE.CanvasTexture(artworkCanvas),this.data);texture.channel=3;texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result.map=texture;
     }
     const foilCanvas=await this.makeEffectMask(images[1],w,h,drawPlaced('foil')),uvCanvas=await this.makeEffectMask(images[2],w,h,drawPlaced('uv'));
-    for(const [key,canvas] of [['foil',foilCanvas],['uv',uvCanvas]])if(canvas){const texture=new THREE.CanvasTexture(canvas);texture.channel=3;texture.colorSpace=THREE.NoColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[key]=texture;}
+    for(const [key,canvas] of [['foil',foilCanvas],['uv',uvCanvas]])if(canvas){const texture=orientSheetTexture(new THREE.CanvasTexture(canvas),this.data);texture.channel=3;texture.colorSpace=THREE.NoColorSpace;texture.anisotropy=Math.min(8,this.v.renderer.capabilities.getMaxAnisotropy());result[key]=texture;}
     const preview=document.createElement('canvas');preview.width=w;preview.height=h;const context=preview.getContext('2d');
     if(artworkCanvas)context.drawImage(artworkCanvas,0,0);
     if(foilCanvas){
