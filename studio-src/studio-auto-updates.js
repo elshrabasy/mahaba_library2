@@ -1,3 +1,5 @@
+import {setLayerTransform} from './artwork-placement.js?v=transform-1';
+
 export class LatestUpdateQueue{
   constructor(run,onError,{setTimer=(callback,delay)=>setTimeout(callback,delay),clearTimer=timer=>clearTimeout(timer)}={}){
     this.run=run;this.onError=onError;this.setTimer=setTimer;this.clearTimer=clearTimer;this.pending=null;this.running=false;this.timer=null;
@@ -53,9 +55,10 @@ export class StudioAutoUpdates{
     },onError);
     this.artwork=new LatestUpdateQueue(async update=>{
       if(studio.serial!==update.serial||!Array.from(studio.layers.values()).includes(update.layer))return;
-      Object.assign(update.layer,update.values);await studio.applyAll();
+      setLayerTransform(update.layer,update.kind,update.values);await studio.applyAll();studio.artworkTransform?.sync();
     },onError);
     studio.scheduleDimensionUpdate=delay=>this.scheduleDimensions(delay);
+    studio.cancelArtworkUpdate=()=>this.artwork.cancel();
     const fields=studio.$('dimensions');
     for(const type of ['input','change'])fields.addEventListener(type,event=>{
       const field=event.target.closest('[data-mahabat]');
@@ -80,7 +83,7 @@ export class StudioAutoUpdates{
   scheduleArtwork(){
     const values=readArtworkInputs(this.studio);
     if(!values){this.artwork.cancel();return;}
-    this.artwork.schedule({serial:this.studio.serial,layer:this.studio.layer(),values},180);
+    this.artwork.schedule({serial:this.studio.serial,layer:this.studio.layer(),kind:this.studio.artworkKind||'image',values},180);
   }
   cancel(){this.dimensions.cancel();this.artwork.cancel();}
 }

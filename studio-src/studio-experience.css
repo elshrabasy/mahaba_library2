@@ -150,6 +150,24 @@ html[data-studio-design] .ms-flat { touch-action: none; overscroll-behavior: con
 html[data-studio-design] .ms-flat[data-pan-mode="true"] { cursor: grab; }
 html[data-studio-design] .ms-flat[data-dragging="true"] { cursor: grabbing; user-select: none; }
 html[data-studio-design] .ms-flat:focus-visible { outline: 2px solid var(--teal); outline-offset: -3px; }
+html[data-studio-design] .ms-flat { position: relative; }
+.artwork-frame { color: #168fbd; touch-action: none; }
+.artwork-frame-foil { color: #b58b37; }
+.artwork-frame-uv { color: #8f6cdb; }
+.artwork-frame rect, .artwork-frame line, .artwork-frame circle, .artwork-frame path { stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.artwork-frame .artwork-frame-body { fill: #168fbd05; cursor: move; }
+.artwork-frame .artwork-resize rect, .artwork-frame .artwork-rotate > circle:not(.artwork-hit) { fill: #fff; }
+.artwork-frame .artwork-hit { fill: transparent; stroke: none; pointer-events: all; }
+.artwork-frame .artwork-nw, .artwork-frame .artwork-se { cursor: nwse-resize; }
+.artwork-frame .artwork-ne, .artwork-frame .artwork-sw { cursor: nesw-resize; }
+.artwork-frame .artwork-rotate { cursor: grab; }
+.artwork-frame .artwork-rotate path { fill: none; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+html[data-studio-design] .ms-flat[data-artwork-dragging="true"] { cursor: grabbing; user-select: none; }
+.artwork-toolbar { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 20px); padding: 5px 7px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 6px 25px #0002; cursor: default; }
+html[data-studio-design] .ms-layout .artwork-toolbar select { width: auto; min-width: 80px; min-height: 30px; padding: 3px 7px !important; font-size: 10px !important; border: 0; background: var(--atelier-surface); }
+.artwork-toolbar output { font: 11px/1.4 "Segoe UI", Arial, sans-serif; color: var(--muted); white-space: nowrap; min-width: 80px; text-align: center; }
+html[data-studio-design] .ms-layout .artwork-toolbar button { min-height: 30px; min-width: 30px; padding: 2px 7px !important; font-size: 19px !important; border: 0; background: var(--atelier-surface); color: var(--text); }
+.view:has(.ms-flat[data-artwork-selected]) > .atelier-gesture { display: none; }
 html[data-studio-design] .view.split .ms-flat { border-inline-start: 1px solid var(--line); }
 .atelier-canvas-label { position: absolute; top: 17px; inset-inline-start: 18px; display: flex; align-items: center; gap: 8px; z-index: 8; pointer-events: none; color: var(--muted); font-size: 10px; }
 .atelier-canvas-tools { position: absolute; top: 13px; inset-inline-end: 14px; display: flex; gap: 5px; z-index: 9; }

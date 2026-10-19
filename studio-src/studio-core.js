@@ -1,3 +1,5 @@
+import {validArtworkTransform} from './artwork-placement.js?v=transform-1';
+
 // Shared contract between CAD models, artwork, project files and nesting.
 export const FORMAT='MahabatLibraryStudio/1';
 export function resolveSurface(values,data){
@@ -29,6 +31,7 @@ export function validateProject(p){
  const seen=new Set();for(const [key,s] of p.layers){if(typeof key!=='string'||!/^\d+:(outside|inside)$/.test(key)||seen.has(key)||!s)throw Error('بيانات الأجزاء غير صالحة.');seen.add(key);
  for(const k of ['scale','x','y','angle'])if(!Number.isFinite(s[k]))throw Error('موضع التصميم غير صالح.');
  if(s.scale<5||s.scale>500||Math.abs(s.x)>2000||Math.abs(s.y)>2000||Math.abs(s.angle)>36000)throw Error('موضع التصميم خارج المجال.');
+ if(s.effectTransforms!==undefined&&(!s.effectTransforms||typeof s.effectTransforms!=='object'||Array.isArray(s.effectTransforms)||Object.entries(s.effectTransforms).some(([kind,transform])=>!['foil','uv'].includes(kind)||!validArtworkTransform(transform))))throw Error('موضع التشطيب غير صالح.');
  if(!['matte','satin','gloss'].includes(s.finish)||!['source','white','kraft'].includes(s.stock)||!/^#[a-f\d]{6}$/i.test(s.foilColor))throw Error('إعداد الخامة غير صالح.');
  for(const k of ['image','foil','uv'])if(s[k]!==null&&(typeof s[k]!=='string'||!/^data:image\/(png|jpeg);base64,/.test(s[k])||s[k].length>15000000))throw Error('الصورة المحفوظة غير صالحة.');}
  if(p.camera&&(!Array.isArray(p.camera.position)||p.camera.position.length!==3||!p.camera.position.every(Number.isFinite)||!Array.isArray(p.camera.target)||p.camera.target.length!==3||!p.camera.target.every(Number.isFinite)||!Array.isArray(p.camera.up)||p.camera.up.length!==3||!p.camera.up.every(Number.isFinite)))throw Error('الكاميرا غير صالحة.');
