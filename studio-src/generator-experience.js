@@ -20,7 +20,9 @@ export class GeneratorExperience{
     }
     this.annotationLayer=document.createElement('div');this.annotationLayer.className='mgx-annotation-layer';this.v.host.append(this.annotationLayer);
     this.card=document.createElement('div');this.card.className='mgx-panel-card';this.card.hidden=true;this.card.innerHTML=`<div class="mgx-panel-head"><div><b data-mgx-name>Panel</b><div class="mgx-panel-id" data-mgx-id></div></div><button type="button" data-mgx-close>×</button></div><div class="mgx-panel-grid"><div class="mgx-panel-metric"><small>Width</small><span data-mgx-w>—</span></div><div class="mgx-panel-metric"><small>Height</small><span data-mgx-h>—</span></div><div class="mgx-panel-metric"><small>Fold</small><span data-mgx-fold>—</span></div><div class="mgx-panel-metric"><small>Parent</small><span data-mgx-parent>—</span></div></div><div class="mgx-edit"><div class="mgx-edit-title">Box dimensions · Mahabat Engine</div><div class="mgx-edit-grid"><label>L<input type="number" step="1" data-mgx-param="L"></label><label>W<input type="number" step="1" data-mgx-param="W"></label><label>H<input type="number" step="1" data-mgx-param="H"></label></div><div class="mgx-edit-actions"><button type="button" data-mgx-apply>تطبيق</button></div></div><div class="mgx-panel-note">التعديل يغيّر بارامترات القالب فقط ثم يعيد التوليد من Mahabat Engine؛ لا يتم تحريك نقاط القص أو التكسير يدويًا.</div>`;
-    this.v.host.append(this.card);this.card.querySelector('[data-mgx-close]').onclick=()=>this.clearSelection();this.card.querySelector('[data-mgx-apply]').onclick=()=>this.applyCardDimensions();
+    this.card.querySelector('.mgx-edit-actions').remove();
+    this.v.host.append(this.card);this.card.querySelector('[data-mgx-close]').onclick=()=>this.clearSelection();
+    for(const input of this.card.querySelectorAll('[data-mgx-param]'))input.addEventListener('input',()=>this.applyCardDimensions());
     const canvas=this.v.renderer.domElement;
     canvas.addEventListener('pointerdown',e=>{this.down={x:e.clientX,y:e.clientY,t:performance.now()};});
     canvas.addEventListener('pointerup',e=>{if(!this.down)return;const d=Math.hypot(e.clientX-this.down.x,e.clientY-this.down.y),dt=performance.now()-this.down.t;this.down=null;if(d<6&&dt<700)this.pick(e);});
@@ -43,13 +45,30 @@ export class GeneratorExperience{
   highlightFlat(panel){this.removeFlatHighlight();const poly=panel?.polygon||panel?.poly;if(!Array.isArray(poly)||poly.length<3)return;const svg=this.s.$?.('flat')?.querySelector?.('svg');if(!svg)return;const ns='http://www.w3.org/2000/svg',el=document.createElementNS(ns,'polygon');el.setAttribute('points',poly.map(p=>`${p[0]},${p[1]}`).join(' '));el.setAttribute('class','mgx-selected-flat');el.dataset.mgxSelected='1';svg.append(el);}
   dimensionField(key){return this.s.$?.('dimensions')?.querySelector?.(`[data-mahabat="${key}"]`)||null;}
   syncCardDimensions(){for(const key of ['L','W','H']){const el=this.card.querySelector(`[data-mgx-param="${key}"]`),src=this.dimensionField(key);if(el&&src)el.value=src.value;}}
-  async applyCardDimensions(){if(!this.active()||this.s.dimensionsBusy)return;for(const key of ['L','W','H']){const src=this.dimensionField(key),edit=this.card.querySelector(`[data-mgx-param="${key}"]`);if(src&&edit&&Number.isFinite(Number(edit.value)))src.value=edit.value;}await this.s.applyDimensions(false);}
+  applyCardDimensions(){if(!this.active())return;for(const key of ['L','W','H']){const src=this.dimensionField(key),edit=this.card.querySelector(`[data-mgx-param="${key}"]`);if(src&&edit)src.value=edit.value;}this.schedule(450);}
   validationChecks(){return this.engineeringModel()?.validation?.checks||this.s.data?.validation?.checks||[];}
   warningsHtml(){const checks=this.validationChecks(),important=checks.filter(x=>x.status!=='PASS').slice(0,4);if(!important.length)return '<div class="mgx-warning pass">✓ لا توجد تحذيرات هندسية حالية في الفحوصات المتاحة.</div>';return important.map(x=>`<div class="mgx-warning ${statusClass(x.status)}"><b>${x.status==='FAIL'?'✕':'⚠'} ${x.status}</b><br>${x.message||x.id}</div>`).join('');}
   updateWarnings(){const holder=this.s.$?.('dimensions')?.querySelector?.('[data-mgx-warnings]');if(holder)holder.innerHTML=this.warningsHtml();}
-  enhanceDimensions(){if(!this.active())return;const fields=this.s.$?.('dimensions');if(!fields)return;let card=fields.querySelector('[data-mgx-generator]');if(!card){const dt=fields.querySelector('[data-mahabat="DT"]');if(!dt)return;card=document.createElement('div');card.className='mgx-card';card.dataset.mgxGenerator='1';card.innerHTML='<div class="mgx-kicker">Quick Generator</div><div class="mgx-title">طريقة القياس</div><div class="mgx-segment"><button type="button" data-mode="1">Internal</button><button type="button" data-mode="2">External</button><button type="button" data-mode="3">Score</button></div><label class="mgx-live"><span>Live engineering update</span><input type="checkbox" data-mgx-live checked></label><div class="mgx-status">غيّر L / W / H أو الخامة، وسيُعاد الحساب من <strong>Mahabat Engine</strong> نفسه بدون أي Scale للمجسم.</div><div data-mgx-warnings></div>';fields.prepend(card);const field=dt.closest('.field');if(field)field.style.display='none';const sync=()=>card.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===String(dt.value)));sync();card.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{dt.value=b.dataset.mode;dt.dispatchEvent(new Event('change',{bubbles:true}));sync();this.schedule(80);});card.querySelector('[data-mgx-live]').onchange=e=>{this.live=e.target.checked;};for(const el of fields.querySelectorAll('[data-mahabat]')){if(el===dt)continue;el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>this.schedule(el.tagName==='SELECT'?120:650));}}
+  enhanceDimensions(){
+    if(!this.active())return;
+    const fields=this.s.$?.('dimensions');if(!fields)return;
+    if(!fields.querySelector('[data-mgx-generator]')){
+      const dt=fields.querySelector('[data-mahabat="DT"]');if(!dt)return;
+      const card=document.createElement('div');card.className='mgx-card';card.dataset.mgxGenerator='1';
+      card.innerHTML='<div class="mgx-kicker">Quick Generator</div><div class="mgx-title">طريقة القياس</div><div class="mgx-segment"><button type="button" data-mode="1">Internal</button><button type="button" data-mode="2">External</button><button type="button" data-mode="3">Score</button></div><div class="mgx-status">غيّر L / W / H أو الخامة، وسيُعاد الحساب من <strong>Mahabat Engine</strong> نفسه بدون أي Scale للمجسم.</div><div data-mgx-warnings></div>';
+      fields.prepend(card);const field=dt.closest('.field');if(field)field.style.display='none';
+      const sync=()=>card.querySelectorAll('[data-mode]').forEach(button=>button.classList.toggle('active',button.dataset.mode===String(dt.value)));
+      sync();
+      card.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{
+        dt.value=button.dataset.mode;dt.dispatchEvent(new Event('change',{bubbles:true}));sync();
+        if(!this.s.scheduleDimensionUpdate)this.schedule(80);
+      });
+    }
     this.updateWarnings();
   }
-  schedule(delay=500){if(!this.live||!this.active()||this.s.dimensionsBusy)return;clearTimeout(this.timer);this.timer=setTimeout(()=>{if(!this.s.dimensionsBusy)this.s.applyDimensions(false);},delay);}
+  schedule(delay=500){
+    if(this.s.scheduleDimensionUpdate)return this.s.scheduleDimensionUpdate(delay);
+    clearTimeout(this.timer);this.timer=setTimeout(()=>this.s.applyDimensions(false).catch(error=>this.s.message(error.message)),delay);
+  }
   refresh(){clearTimeout(this.timer);this.clearSelection();queueMicrotask(()=>{this.enhanceDimensions();this.updateWarnings();});}
 }

@@ -79,13 +79,13 @@ export class MahabatSharedStudio extends SharedStudio {
 
   setReady(ready){super.setReady(ready);if(this.data?.source==='mahabat-engine')for(const id of ['applyDimensions','resetDimensions']){const el=this.$(id);if(el)el.disabled=!ready||!!this.dimensionsBusy;}}
 
-  async applyDimensions(reset=false){
+  async applyDimensions(reset=false,parameters=null){
     if(this.data?.source!=='mahabat-engine')return super.applyDimensions(reset);
-    const params=reset?null:{...this.data.requestedParameters};
-    if(params)for(const el of this.$('dimensions').querySelectorAll('[data-mahabat]')){const k=el.dataset.mahabat,type=el.dataset.mahabatType||'string';let v=el.value;if(type==='number'){v=Number(v);if(!Number.isFinite(v)||v<0){this.message('أدخل قيمة صحيحة.');el.focus();return false;}}params[k]=v;}
-    const button=this.$('applyDimensions'),original=this.$('resetDimensions');this.dimensionsBusy=true;button.disabled=original.disabled=true;button.textContent='جارٍ إعادة الحساب…';this.message('جارٍ إعادة بناء القالب من Mahabat Engine…');
+    const params=reset?null:{...this.data.requestedParameters,...parameters};
+    if(params&&!parameters)for(const el of this.$('dimensions').querySelectorAll('[data-mahabat]')){const k=el.dataset.mahabat,type=el.dataset.mahabatType||'string';let v=el.value;if(type==='number'){v=Number(v);if(el.value.trim()===''||!el.checkValidity()||!Number.isFinite(v)||v<0){this.message('أدخل قيمة صحيحة.');el.focus();return false;}}params[k]=v;}
+    this.dimensionsBusy=true;this.message('جارٍ تحديث الأبعاد والخامة تلقائيًا…');
     try{const ok=await this.v.load(this.v.currentCode||this.code,'',params,true);if(ok===false)return false;this.message(reset?'تمت استعادة المقاس الأصلي.':'تم تحديث المقاسات والخامة والرسم والمجسم من نفس Mahabat Studio.');return true;}
-    finally{this.dimensionsBusy=false;button.disabled=original.disabled=false;button.textContent='تطبيق الأبعاد';}
+    finally{this.dimensionsBusy=false;}
   }
 
   async makeEffectMask(image,w,h,drawPlaced){
