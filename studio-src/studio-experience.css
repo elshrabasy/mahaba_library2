@@ -151,6 +151,14 @@ html[data-studio-design] .view.split .ms-flat { border-inline-start: 1px solid v
 .atelier-canvas-tools { position: absolute; top: 13px; inset-inline-end: 14px; display: flex; gap: 5px; z-index: 9; }
 html[data-studio-design] .ms-layout .atelier-canvas-tools button { width: 34px; height: 34px; min-height: 0; padding: 8px !important; background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 8px !important; }
 .atelier-canvas-tools svg { width: 16px; height: 16px; display: block; }
+html[data-studio-design] .ms-layout .atelier-canvas-tools #studioDimensions[aria-pressed="true"] { color: var(--teal); border-color: var(--teal); background: var(--atelier-active); }
+.box-dimensions { color: #307fa9; font-family: "Segoe UI", Arial, sans-serif; }
+.box-dimension > line,
+.box-dimension-ticks { stroke: currentColor; stroke-width: 1.1; vector-effect: non-scaling-stroke; fill: none; }
+.box-dimension-ticks { opacity: .65; }
+.box-dimension-arrows { fill: currentColor; }
+.box-dimension-label rect { fill: #f6fbfe; stroke: #b4d5e6; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.box-dimension-label text { fill: #185e86; }
 .atelier-gesture { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); pointer-events: none; white-space: nowrap; font-size: 9px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 6px 13px; opacity: .86; }
 .atelier-gesture span { margin: 0 9px; color: var(--gold); }
 .atelier-settings-row { display: flex; align-items: stretch; gap: 9px; margin-top: 10px; flex-shrink: 0; }

@@ -1,3 +1,5 @@
+import {boxDimensionGuides,dimensionGuidesSvg,dimensionViewportScale} from './dieline-dimensions.js?v=dimensions-1';
+
 const COPY={
   ar:{workspace:'مساحة العمل',template:'القالب الحالي',save:'حفظ المشروع',export:'تصدير',vector:'رسم متجهي',print:'طباعة 1:1',journey:'من الفكرة إلى الإنتاج',build:'بناء القالب',design:'التصميم والتشطيب',nest:'المونتاج',production:'الإنتاج',preview:'مساحة المعاينة',subtitle:'تفاصيل أوضح. وقرارات أسهل.',tools:'الأدوات',interactive:'معاينة تفاعلية',gesture:'اسحب للدوران · مرّر للتقريب',flatGesture:'الرسم المسطح · اسحب التصميم لضبط المحاذاة',loading:'نجهّز مساحة إبداعك',ready:'جاهز للمعاينة',error:'تعذّر تجهيز القالب',flat:'مسطّح',closed:'مطويّ',allFolds:'كل الطيات',body:'الجسم',bottom:'القاعدة',top:'الغطاء',fit:'توسيط المجسم · F',focus:'توسيع المعاينة',restore:'العودة لمساحة العمل · Esc',open:'فتح مشروع',close:'إغلاق لوحة الأدوات',views:{'3d':'ثلاثي الأبعاد','2d':'الرسم المسطح',split:'الرسم والمجسم'}},
   en:{workspace:'Workspace',template:'Current template',save:'Save project',export:'Export',vector:'Vector drawing',print:'Print at 1:1',journey:'From idea to production',build:'Build',design:'Design & finish',nest:'Nesting',production:'Production',preview:'Your workbench',subtitle:'Clearer details. Better decisions.',tools:'Tools',interactive:'Interactive preview',gesture:'Drag to orbit · Scroll to zoom',flatGesture:'2D dieline · Drag artwork to align',loading:'Preparing your workspace',ready:'Ready to preview',error:'Could not load template',flat:'Flat',closed:'Folded',allFolds:'All folds',body:'Body',bottom:'Bottom',top:'Top',fit:'Fit model · F',focus:'Expand preview',restore:'Back to workspace · Esc',open:'Open project',close:'Close tools',views:{'3d':'3D preview','2d':'2D dieline',split:'Dieline & model'}}
@@ -31,7 +33,10 @@ export class StudioExperience{
     this.toggle=document.getElementById('studioPanelToggle');
     this.focusButton=document.getElementById('studioFocus');
     this.exportMenu=document.getElementById('studioExportMenu');
+    this.dimensionButton=document.getElementById('studioDimensions');this.showDimensions=true;
     this.installBindings();this.wrapStudio();this.localize();this.syncView();
+    this.dimensionObserver=new ResizeObserver(()=>this.drawDimensions());
+    this.dimensionObserver.observe(this.studio.$('flat'));
     if(this.mobile.matches)this.studio.setPane(null);else this.syncPanel();
   }
   copy(){return COPY[document.documentElement.lang]||COPY.ar;}
@@ -51,6 +56,7 @@ export class StudioExperience{
     this.backdrop.addEventListener('click',()=>this.studio.setPane(null));
     document.getElementById('studioFit').addEventListener('click',()=>this.fitPreview());
     this.focusButton.addEventListener('click',()=>this.setFocus(!document.body.classList.contains('atelier-focused')));
+    this.dimensionButton.addEventListener('click',()=>{this.showDimensions=!this.showDimensions;this.drawDimensions();this.syncDimensionButton();});
     for(const button of document.querySelectorAll('[data-studio-export]'))button.addEventListener('click',()=>{
       this.studio.$(button.dataset.studioExport==='svg'?'exportSvg':'exportPdf').click();
       this.exportMenu.open=false;
@@ -61,6 +67,8 @@ export class StudioExperience{
     window.addEventListener('storage',event=>{if(['mahaba:lang','mahaba:theme'].includes(event.key))this.ui.apply();});
   }
   wrapStudio(){
+    const drawFlat=this.studio.drawFlat.bind(this.studio);
+    this.studio.drawFlat=()=>{drawFlat();this.drawDimensions();};
     const setPane=this.studio.setPane.bind(this.studio);
     this.studio.setPane=pane=>{
       const wasClosed=this.studio.root.hidden;
@@ -113,6 +121,23 @@ export class StudioExperience{
     this.setText(document.getElementById('studioViewLabel'),copy.views[mode]);
     this.setText(document.querySelector('[data-experience="gesture"]'),mode==='2d'?copy.flatGesture:copy.gesture);
     document.querySelector('.ms-fold-controls').hidden=mode==='2d';
+    this.dimensionButton.hidden=mode==='3d';this.syncDimensionButton();
+  }
+  syncDimensionButton(){
+    const arabic=document.documentElement.lang!=='en';
+    const label=arabic?(this.showDimensions?'إخفاء المقاسات':'إظهار المقاسات'):(this.showDimensions?'Hide dimensions':'Show dimensions');
+    this.dimensionButton.setAttribute('aria-pressed',String(this.showDimensions));
+    this.dimensionButton.setAttribute('aria-label',label);this.dimensionButton.title=label;
+  }
+  drawDimensions(){
+    const svg=this.studio.$('flat')?.querySelector('svg');
+    if(!svg)return;
+    svg.querySelector('[data-box-dimensions]')?.remove();
+    if(!this.showDimensions||this.studio.view==='3d')return;
+    const partIndex=Number(this.studio.$('drawing').value||0),side=this.studio.$('side').value;
+    const guides=boxDimensionGuides(this.studio.data,partIndex,side);
+    const bounds=svg.getBoundingClientRect(),scale=dimensionViewportScale(svg.viewBox.baseVal,bounds.width,bounds.height);
+    svg.insertAdjacentHTML('beforeend',dimensionGuidesSvg(guides,scale));
   }
   fitPreview(){
     if(this.studio.view==='2d'){
