@@ -1,6 +1,8 @@
 // Mahabat Engine -> Mahaba Library Studio adapter.
 // Converted templates use Mahabat geometry as the authority.
 
+import {drawingPathPoints} from '../core/geometry/path-points.js';
+
 export const MAHABAT_SCHEMA = 'MahabatNativeModel/1';
 
 export function assertMahabatEngine(){
@@ -86,10 +88,8 @@ function normalizeLines(part,type){
   const direct=part[type==='cut'?'cuts':'creases'];
   if(Array.isArray(direct))return direct.map(line=>line.map(p=>[Number(p[0]),Number(p[1])]));
   return (part.lines||[]).filter(line=>line.type===type).flatMap(line=>{
-    // The initial Studio contract preserves endpoints. Curved cut segments remain in the
-    // Mahabat geometry and are expanded by the native bridge before production export.
     if(!line.a||!line.b)return [];
-    return [[[Number(line.a[0]),Number(line.a[1])],[Number(line.b[0]),Number(line.b[1])]]];
+    return [drawingPathPoints(line)];
   });
 }
 

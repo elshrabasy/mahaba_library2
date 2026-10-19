@@ -3,6 +3,7 @@
 // No bounding-box replacement is permitted.
 import './nest-engine-core.js';
 import {prepareIrregularTemplate,buildConvexNFP,relativeRotations} from './nfp-lite.js';
+import {drawingPathPoints} from '../core/geometry/path-points.js';
 
 if(typeof globalThis!=='undefined'&&globalThis.MahabaNestEngine&&!globalThis.NestEngine){
   globalThis.NestEngine=globalThis.MahabaNestEngine;
@@ -14,8 +15,8 @@ export function buildNestTemplate(engineResult){
   if(!engineResult)throw new Error('لا توجد هندسة من Mahabat Engine.');
   const polygon=(engineResult.outline||[]).map(clonePoint);
   if(polygon.length<3)throw new Error('محيط القالب غير صالح للمونتاج.');
-  const cuts=(engineResult.lines||[]).filter(x=>x.type==='cut').map(x=>[clonePoint(x.a),clonePoint(x.b)]);
-  const creases=(engineResult.lines||[]).filter(x=>x.type==='crease').map(x=>[clonePoint(x.a),clonePoint(x.b)]);
+  const cuts=(engineResult.lines||[]).filter(x=>x.type==='cut').map(drawingPathPoints);
+  const creases=(engineResult.lines||[]).filter(x=>x.type==='crease').map(drawingPathPoints);
   if(!cuts.length)throw new Error('لا توجد خطوط قص في القالب.');
   return {
     code:engineResult.code,

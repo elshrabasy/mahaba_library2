@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:ui": "node tests/studio-experience.mjs && node tests/dieline-dimensions.mjs",
+    "test:ui": "node tests/studio-experience.mjs && node tests/dieline-dimensions.mjs && node tests/dieline-curves.mjs && node tests/dieline-viewport.mjs",
     "test": "node tests/evc11001-pilot.mjs && node tests/evc11001-geometry-freeze.mjs && node tests/evc11001-geometry-hash.mjs && node tests/core-contract-v1.mjs && node tests/benchmark-framework-v1.mjs && node tests/material-compensation-core.mjs && node tests/straight-tuck-end-reference.mjs && node tests/ste-benchmark-reference.mjs && node tests/production-optimizer-v1.mjs && node tests/production-studio-link.mjs && node tests/engineering-studio-contract.mjs && node tests/generator-experience-contract.mjs && node tests/nesting-page-contract.mjs && node tests/nesting-render-contract.mjs && node tests/studio-preferences-contract.mjs && node tests/studio-ui-controller-contract.mjs && node tests/nesting-bridge.mjs && node tests/nest-engine-regular.mjs && node tests/nest-patterns.mjs && node tests/nest-pair-interlock.mjs && node tests/nest-worker-interlock.mjs && node tests/nest-ga-optimizer.mjs && node tests/nest-production-optimizer.mjs && node tests/studio-integration-contract.mjs"
   }
 }

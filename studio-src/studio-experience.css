@@ -146,12 +146,17 @@ html[data-studio-design] #canvas3d { min-height: 0; flex: 1 1 auto; width: 100%;
 html[data-studio-design] #canvas3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; }
 html[data-studio-design] .ms-flat { width: 100%; height: 100%; min-height: 0; overflow: auto; background-color: var(--atelier-stage); background-image: radial-gradient(var(--line) .75px, transparent .75px); background-size: 18px 18px; }
 html[data-studio-design] .ms-flat > svg { width: 100%; height: 100%; display: block; }
+html[data-studio-design] .ms-flat { touch-action: none; overscroll-behavior: contain; }
+html[data-studio-design] .ms-flat[data-pan-mode="true"] { cursor: grab; }
+html[data-studio-design] .ms-flat[data-dragging="true"] { cursor: grabbing; user-select: none; }
+html[data-studio-design] .ms-flat:focus-visible { outline: 2px solid var(--teal); outline-offset: -3px; }
 html[data-studio-design] .view.split .ms-flat { border-inline-start: 1px solid var(--line); }
 .atelier-canvas-label { position: absolute; top: 17px; inset-inline-start: 18px; display: flex; align-items: center; gap: 8px; z-index: 8; pointer-events: none; color: var(--muted); font-size: 10px; }
 .atelier-canvas-tools { position: absolute; top: 13px; inset-inline-end: 14px; display: flex; gap: 5px; z-index: 9; }
 html[data-studio-design] .ms-layout .atelier-canvas-tools button { width: 34px; height: 34px; min-height: 0; padding: 8px !important; background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 8px !important; }
 .atelier-canvas-tools svg { width: 16px; height: 16px; display: block; }
 html[data-studio-design] .ms-layout .atelier-canvas-tools #studioDimensions[aria-pressed="true"] { color: var(--teal); border-color: var(--teal); background: var(--atelier-active); }
+html[data-studio-design] .ms-layout .atelier-canvas-tools #studioPan[aria-pressed="true"] { color: var(--teal); border-color: var(--teal); background: var(--atelier-active); }
 .box-dimensions { color: #307fa9; font-family: "Segoe UI", Arial, sans-serif; }
 .box-dimension > line,
 .box-dimension-ticks { stroke: currentColor; stroke-width: 1.1; vector-effect: non-scaling-stroke; fill: none; }
