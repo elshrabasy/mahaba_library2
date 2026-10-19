@@ -24,3 +24,19 @@ The frame and toolbar are preview-only. They never enter textures or SVG/PDF
 cutting exports. No EVC11001 geometry is modified.
 
 Run `npm run test:ui` for placement, gesture, persistence and regression checks.
+
+## 2D / 3D registration
+
+Mahabat native panels and their sheet UV matrices use top-down sheet coordinates.
+Canvas artwork, foil and UV textures must therefore upload with `flipY=false`.
+The default canvas texture flip would move the same printed mark to a different
+sheet row in 3D. This correction does not change image placements, the inside
+horizontal reflection, native geometry, or the legacy native upload convention.
+
+`tests/sheet-texture-registration.mjs` checks both print sides and all three
+texture kinds on EVC11001 and Straight Tuck End. For the real WebGL regression,
+serve the repository and open `tests/fixtures/foil-registration.html`. It uses
+the production baking, finishing shader and native mesh renderer, comparing
+render-target pixels at known panel points against the 2D canvas. Asymmetric
+artwork/masks cover translated, resized and rotated outside/inside placements.
+The test page reports its result in `body[data-result]` and per-case results.

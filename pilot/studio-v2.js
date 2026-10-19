@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {generateMahabatNative,listMahabatTemplates} from '../engine/registry.js';
 import {buildNativeModel,setNativeTime,disposeNativeModel,visibleBounds} from '../studio-src/native_runtime.js';
-import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=transform-1';
+import {MahabatSharedStudio} from '../studio-src/mahabat-shared-studio.js?v=registration-1';
 import {EngineeringStudioPanel} from '../studio-src/engineering-panel.js?v=20261015-1';
 import {StudioProductionLink} from '../studio-src/production-link.js?v=20261015-1';
 import {GeneratorExperience} from '../studio-src/generator-experience.js?v=auto-1';
